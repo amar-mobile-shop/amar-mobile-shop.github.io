@@ -175,22 +175,34 @@ function prettyDate(k) {
   return Number(m[3]) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m[2]) - 1] + ' ' + m[1];
 }
 
+// Inside Google Apps Script (the /exec link) use google.script.run; on GitHub/Hostinger use API_URL
+function inScript() { try { return !!(window.google && google.script && google.script.run); } catch (e) { return false; } }
+function handleRes(res) {
+  if (res && res.ok) return res.data;
+  if (res && res.auth === false) { logoutLocal(); toast(res.error, true); throw res.error; }
+  var msg = (res && res.error) || 'Something went wrong';
+  if (/Unknown action/.test(msg)) msg += '. Code.gs is out of date: paste the latest Code.gs and deploy a New version.';
+  toast(msg, true); throw msg;
+}
 function call(action, payload, quiet) {
   if (!quiet) busy(true);
+  if (inScript()) {
+    return new Promise(function (resolve, reject) {
+      google.script.run.withSuccessHandler(function (res) {
+        busy(false);
+        try { resolve(handleRes(res)); } catch (e) { reject(e); }
+      }).withFailureHandler(function (e) { busy(false); toast('Server error: ' + e.message, true); reject(e); })
+        .api(S.token, action, payload || {});
+    });
+  }
   return fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ token: S.token, action: action, p: payload || {} })
   }).then(function (r) { return r.json(); }, function (e) {
     busy(false); toast('No internet or server not reachable. Please try again.', true); throw e;
-  }).then(function (res) {
-    busy(false);
-    if (res && res.ok) return res.data;
-    if (res && res.auth === false) { logoutLocal(); toast(res.error, true); throw res.error; }
-    var msg = (res && res.error) || 'Something went wrong';
-    if (/Unknown action/.test(msg)) msg += '. Code.gs is out of date: paste the latest Code.gs and deploy a New version.';
-    toast(msg, true); throw msg;
-  }, function (e) { busy(false); if (typeof e === 'string') throw e; toast('Server error. Check the API_URL in index.html.', true); throw e; });
+  }).then(function (res) { busy(false); return handleRes(res); },
+    function (e) { busy(false); if (typeof e === 'string') throw e; toast('Server error. Check the API_URL in index.html.', true); throw e; });
 }
 
 /* ---------- login ---------- */
@@ -1381,7 +1393,7 @@ function viewMore() {
 }
 
 /* ---------- start ---------- */
-if (API_URL.indexOf('http') !== 0) {
+if (!inScript() && API_URL.indexOf('http') !== 0) {
   $('app').innerHTML = '<div class="card"><h3>Setup needed</h3>Open index.html and paste your Apps Script Web App link into API_URL.</div>';
 } else if (S.token) start(); else showLogin();
 </script>
