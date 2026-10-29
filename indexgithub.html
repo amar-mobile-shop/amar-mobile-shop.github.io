@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Mobile Shop</title>
+<style>
+  :root {
+    --bg: #F4F6FA; --card: #FFFFFF; --ink: #1B2332; --muted: #6B7485; --line: #E2E6EE;
+    --brand: #1F3864; --brand-2: #2E5AAC; --ok: #1E8E5A; --bad: #C0392B; --soft: #EEF3FC;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--ink); font-size: 15px; }
+  header { background: var(--brand); color: #fff; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 5; }
+  header .title { font-weight: 700; font-size: 17px; }
+  header .who { font-size: 13px; opacity: .85; }
+  nav { display: flex; overflow-x: auto; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 46px; z-index: 4; }
+  nav button { flex: 1 0 auto; border: 0; background: none; padding: 12px 14px; font-size: 14px; color: var(--muted); border-bottom: 3px solid transparent; cursor: pointer; }
+  nav button.on { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+  main { max-width: 980px; margin: 0 auto; padding: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .card h3 { margin: 0 0 12px; font-size: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .stat { background: var(--soft); border-radius: 8px; padding: 12px; }
+  .stat .k { font-size: 12px; color: var(--muted); }
+  .stat .v { font-size: 20px; font-weight: 700; margin-top: 4px; }
+  .stat.good .v { color: var(--ok); } .stat.bad .v { color: var(--bad); }
+  .form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 14px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  input, select, textarea { width: 100%; padding: 10px; border: 1px solid #CBD2DE; border-radius: 8px; font-size: 15px; background: #fff; color: var(--ink); font-family: inherit; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand-2); border-color: transparent; }
+  .chk { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink); }
+  .chk input { width: auto; }
+  .btn { border: 0; border-radius: 8px; padding: 11px 18px; font-size: 15px; cursor: pointer; background: var(--brand); color: #fff; font-weight: 600; }
+  .btn.sec { background: #E7ECF5; color: var(--brand); }
+  .btn.bad { background: #FBE9E7; color: var(--bad); }
+  .btn.sm { padding: 6px 10px; font-size: 13px; }
+  .btn:disabled { opacity: .5; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+  .row > * { flex: 1 1 160px; }
+  .row > .btn { flex: 0 0 auto; }
+  .actions { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .sub { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .sub button { border: 1px solid var(--line); background: #fff; border-radius: 20px; padding: 7px 14px; font-size: 14px; cursor: pointer; color: var(--muted); }
+  .sub button.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .tbl th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 8px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .tbl td { padding: 9px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .tbl td.n, .tbl th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .scroll { overflow-x: auto; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; background: #E7ECF5; color: var(--brand); }
+  .pill.low { background: #FBE9E7; color: var(--bad); }
+  .pill.sold { background: #EEE; color: #777; }
+  .item { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; gap: 10px; align-items: center; cursor: pointer; background: #fff; }
+  .item.sel { border-color: var(--brand-2); background: var(--soft); }
+  .total-box { background: var(--soft); border-radius: 8px; padding: 12px; margin-top: 12px; }
+  .total-box div { display: flex; justify-content: space-between; padding: 3px 0; }
+  .total-box .big { font-size: 18px; font-weight: 700; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 8px; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #222; color: #fff; padding: 12px 18px; border-radius: 8px; display: none; z-index: 50; max-width: 90%; }
+  #toast.err { background: var(--bad); }
+  #loading { position: fixed; inset: 0; background: rgba(255,255,255,.6); display: none; align-items: center; justify-content: center; z-index: 40; font-weight: 600; color: var(--brand); }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center; z-index: 30; padding: 16px; overflow: auto; }
+  .modal { background: #fff; border-radius: 10px; max-width: 440px; width: 100%; padding: 18px; margin: auto; }
+  .modal.wide { max-width: 640px; background: #E9EDF4; }
+  .modal .bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .memo-wrap { overflow-x: auto; }
+  .login { max-width: 360px; margin: 40px auto; }
+  .users { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .users button { padding: 14px 8px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 15px; cursor: pointer; }
+  .users button.on { border-color: var(--brand); background: var(--soft); font-weight: 600; }
+  .users small { display: block; color: var(--muted); font-size: 11px; }
+  .hide { display: none !important; }
+  #printArea { display: none; }
+  @media print {
+    body > *:not(#printArea) { display: none !important; }
+    #printArea { display: block !important; }
+    body { background: #fff; }
+  }
+</style>
+<style id="memoCss">
+  .memo { --m-brand: #1F3864; --m-accent: #2E5AAC; --m-line: #D5DBE6; --m-soft: #F2F5FA;
+    background: #fff; color: #1B2332; font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: 12px; line-height: 1.45;
+    width: 148mm; min-height: 200mm; margin: 0 auto; padding: 9mm 9mm 7mm; display: flex; flex-direction: column;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .memo.m-A4 { width: 210mm; min-height: 285mm; font-size: 13.5px; padding: 14mm 14mm 10mm; }
+  .memo * { box-sizing: border-box; }
+  .memo .m-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-bottom: 10px; border-bottom: 3px solid var(--m-brand); }
+  .memo .m-shop { font-size: 22px; font-weight: 800; color: var(--m-brand); letter-spacing: .3px; line-height: 1.15; }
+  .memo .m-sub { color: #55607A; margin-top: 4px; font-size: 11.5px; }
+  .memo .m-tag { background: var(--m-brand); color: #fff; font-weight: 700; letter-spacing: 2px; font-size: 12px; padding: 7px 12px; border-radius: 4px; white-space: nowrap; }
+  .memo .m-meta { display: flex; justify-content: space-between; margin: 10px 0 8px; }
+  .memo .m-meta span, .memo .m-cust span, .memo .m-words span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #7A849A; }
+  .memo .m-meta b { font-size: 13px; }
+  .memo .m-meta .r { text-align: right; }
+  .memo .m-cust { display: grid; grid-template-columns: 1.4fr 1fr; gap: 6px 14px; background: var(--m-soft); border-radius: 6px; padding: 9px 11px; margin-bottom: 12px; }
+  .memo .m-cust .full { grid-column: 1 / -1; }
+  .memo .m-cust b { font-weight: 600; }
+  .memo table.m-items { width: 100%; border-collapse: collapse; }
+  .memo .m-items th { background: var(--m-brand); color: #fff; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding: 7px 8px; text-align: left; }
+  .memo .m-items th.n, .memo .m-items td.n { text-align: right; white-space: nowrap; }
+  .memo .m-items th.c, .memo .m-items td.c { text-align: center; }
+  .memo .m-items td { padding: 8px; border-bottom: 1px solid var(--m-line); vertical-align: top; }
+  .memo .m-items td .d { color: #5E6981; font-size: 11px; margin-top: 2px; }
+  .memo .m-items tr:nth-child(even) td { background: #FAFBFD; }
+  .memo .m-sum { display: flex; justify-content: space-between; gap: 14px; margin-top: 12px; }
+  .memo .m-words { flex: 1; font-size: 11.5px; }
+  .memo .m-words .w { font-weight: 600; margin-bottom: 8px; }
+  .memo .m-words .ex { border-left: 3px solid var(--m-accent); padding: 4px 8px; background: var(--m-soft); margin-top: 6px; }
+  .memo table.m-tot { border-collapse: collapse; min-width: 52%; }
+  .memo .m-tot td { padding: 4px 8px; }
+  .memo .m-tot td.n { text-align: right; white-space: nowrap; }
+  .memo .m-tot tr.grand td { background: var(--m-brand); color: #fff; font-weight: 700; font-size: 14px; padding: 8px; }
+  .memo .m-warranty { margin-top: 10px; padding: 7px 10px; border: 1px dashed var(--m-accent); border-radius: 6px; font-size: 11.5px; }
+  .memo .m-terms { margin-top: 10px; font-size: 10.5px; color: #4A5468; }
+  .memo .m-terms b { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #7A849A; }
+  .memo .m-terms ol { margin: 3px 0 0; padding-left: 16px; }
+  .memo .m-sign { display: flex; justify-content: space-between; gap: 30px; margin-top: auto; padding-top: 34px; }
+  .memo .m-sign div { flex: 1; border-top: 1px solid #888; padding-top: 4px; text-align: center; font-size: 11px; color: #4A5468; }
+  .memo .m-foot { text-align: center; margin-top: 12px; font-size: 11px; color: var(--m-accent); font-weight: 600; }
+  /* 80mm thermal roll */
+  .memo.m-80mm { width: 76mm; min-height: 0; padding: 3mm 2mm; font-size: 11px; display: block; }
+  .memo.m-80mm .m-head { flex-direction: column; align-items: center; text-align: center; border-bottom: 1px dashed #333; }
+  .memo.m-80mm .m-shop { font-size: 16px; }
+  .memo.m-80mm .m-tag { background: none; color: #000; padding: 2px 0 0; letter-spacing: 3px; }
+  .memo.m-80mm .m-cust { grid-template-columns: 1fr; background: none; padding: 0; border-bottom: 1px dashed #333; border-radius: 0; padding-bottom: 6px; }
+  .memo.m-80mm .m-items th { background: none; color: #000; border-bottom: 1px dashed #333; padding: 4px 2px; }
+  .memo.m-80mm .m-items td { padding: 4px 2px; border-bottom: 1px dotted #bbb; }
+  .memo.m-80mm .m-items tr:nth-child(even) td { background: none; }
+  .memo.m-80mm .m-sum { flex-direction: column-reverse; gap: 6px; }
+  .memo.m-80mm table.m-tot { width: 100%; }
+  .memo.m-80mm .m-tot tr.grand td { background: none; color: #000; border-top: 1px dashed #333; border-bottom: 1px dashed #333; }
+  .memo.m-80mm .m-words .ex { background: none; border-left: 0; padding: 0; }
+  .memo.m-80mm .m-sign { padding-top: 26px; }
+</style>
+</head>
+<body>
+<header><div class="title" id="shopName">Mobile Shop</div><div class="who" id="who"></div></header>
+<nav id="nav" class="hide"></nav>
+<main id="app"></main>
+<div id="toast"></div>
+<div id="loading">Please wait...</div>
+<div id="verWarn" class="hide" style="background:#C0392B;color:#fff;padding:12px 16px;font-weight:600"></div>
+<div id="printArea"></div>
+<style id="pageCss"></style>
+
+<script>
+/* ===== SETTING: paste your Apps Script Web App link (ends with /exec) between the quotes ===== */
+var API_URL = 'PASTE_YOUR_WEB_APP_URL_HERE';
+/* ============================================================================================ */
+var APP_VERSION = '2.0';
+function inApp() { try { return !!(window.AndroidApp && window.AndroidApp.isApp()); } catch (e) { return false; } }
+var S = { token: null, boot: null, view: 'home', sub: {}, cart: [], selPhone: null };
+try { S.token = localStorage.getItem('shopToken'); } catch (e) {}
+
+/* ---------- helpers ---------- */
+function $(id) { return document.getElementById(id); }
+function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function tk(n) { n = Number(n) || 0; return (n < 0 ? '-' : '') + 'Tk ' + Math.abs(Math.round(n)).toLocaleString('en-IN'); }
+// Full access = every role except Sales Assistant
+function isOwner() { return !!(S.boot && S.boot.full); }
+function today() { return S.boot ? S.boot.today : new Date().toISOString().slice(0, 10); }
+function val(id) { var el = $(id); return el ? el.value.trim() : ''; }
+function checked(id) { var el = $(id); return !!(el && el.checked); }
+function opts(list, sel) { return list.map(function (x) { return '<option' + (x === sel ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join(''); }
+function toast(msg, err) { var t = $('toast'); t.textContent = msg; t.className = err ? 'err' : ''; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(function () { t.style.display = 'none'; }, err ? 5000 : 2500); }
+function busy(on) { $('loading').style.display = on ? 'flex' : 'none'; }
+function field(label, inner) { return '<div><label>' + label + '</label>' + inner + '</div>'; }
+function inp(id, opt) { opt = opt || {}; return '<input id="' + id + '" type="' + (opt.type || 'text') + '"' + (opt.ph ? ' placeholder="' + esc(opt.ph) + '"' : '') + (opt.v != null ? ' value="' + esc(opt.v) + '"' : '') + (opt.mode ? ' inputmode="' + opt.mode + '"' : '') + '>'; }
+function stat(k, v, cls) { return '<div class="stat ' + (cls || '') + '"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>'; }
+function yes(v) { return v === 'Yes'; }
+function signCls(n) { return n < 0 ? 'bad' : 'good'; }
+function prettyDate(k) {
+  var m = String(k || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) return k || '';
+  return Number(m[3]) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m[2]) - 1] + ' ' + m[1];
+}
+
+function call(action, payload, quiet) {
+  if (!quiet) busy(true);
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ token: S.token, action: action, p: payload || {} })
+  }).then(function (r) { return r.json(); }, function (e) {
+    busy(false); toast('No internet or server not reachable. Please try again.', true); throw e;
+  }).then(function (res) {
+    busy(false);
+    if (res && res.ok) return res.data;
+    if (res && res.auth === false) { logoutLocal(); toast(res.error, true); throw res.error; }
+    var msg = (res && res.error) || 'Something went wrong';
+    if (/Unknown action/.test(msg)) msg += '. Code.gs is out of date: paste the latest Code.gs and deploy a New version.';
+    toast(msg, true); throw msg;
+  }, function (e) { busy(false); if (typeof e === 'string') throw e; toast('Server error. Check the API_URL in index.html.', true); throw e; });
+}
+
+/* ---------- login ---------- */
+function showLogin() {
+  $('nav').classList.add('hide'); $('who').textContent = '';
+  call('loginUsers', {}, true).then(function (users) {
+    var sel = null;
+    $('app').innerHTML = '<div class="card login"><h3>Login</h3><label>Select your name</label><div class="users" id="users">' +
+      users.map(function (u) { return '<button data-id="' + esc(u.id) + '">' + esc(u.name) + '<small>' + esc(u.role) + '</small></button>'; }).join('') +
+      '</div>' + field('PIN', inp('pin', { type: 'password', mode: 'numeric', ph: '****' })) +
+      '<div class="actions"><button class="btn" id="loginBtn" style="width:100%">Login</button></div></div>';
+    $('users').onclick = function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      sel = b.getAttribute('data-id');
+      Array.prototype.forEach.call(this.children, function (x) { x.classList.toggle('on', x === b); });
+      $('pin').focus();
+    };
+    var go = function () {
+      if (!sel) return toast('Select your name', true);
+      call('login', { userId: sel, pin: val('pin') }).then(function (r) {
+        S.token = r.token; try { localStorage.setItem('shopToken', r.token); } catch (e) {}
+        start(r.defaultPin);
+      });
+    };
+    $('loginBtn').onclick = go;
+    $('pin').onkeydown = function (e) { if (e.key === 'Enter') go(); };
+  });
+}
+function logoutLocal() { S.token = null; S.boot = null; S.view = 'home'; S.sub = {}; S.cart = []; try { localStorage.removeItem('shopToken'); } catch (e) {} showLogin(); }
+
+function start(defaultPin) {
+  call('bootstrap', { withDashboard: true }).then(function (b) {
+    S.boot = b;
+    S.prefetchDash = b.dashboard || null;
+    if (b.version !== APP_VERSION) {
+      $('verWarn').textContent = 'Version mismatch: Code.gs is version ' + (b.version || 'old') + ' but Index is version ' + APP_VERSION +
+        '. Paste the latest Code.txt into Code.gs and Index.txt into Index, save, then Deploy > Manage deployments > Edit > New version.';
+      $('verWarn').classList.remove('hide');
+    } else $('verWarn').classList.add('hide');
+    $('shopName').textContent = b.shop.name || 'Mobile Shop'; document.title = b.shop.name || 'Mobile Shop';
+    $('who').textContent = b.user.Name + ' (' + b.user.Role + ')';
+    buildNav();
+    if (defaultPin) { S.view = 'more'; S.sub.more = 'pin'; toast('You are using the default PIN 1234. Please change it now.', true); }
+    render();
+  });
+}
+
+/* ---------- navigation ---------- */
+var VIEWS = [
+  { id: 'home', name: 'Dashboard' }, { id: 'sell', name: 'Sales' }, { id: 'stock', name: 'Phone Stock', owner: true },
+  { id: 'acc', name: 'Accessories', owner: true }, { id: 'exp', name: 'Expenses', owner: true },
+  { id: 'staff', name: 'Staff', owner: true }, { id: 'fin', name: 'Finance', owner: true }, { id: 'report', name: 'Reports', owner: true }, { id: 'more', name: 'Settings' }
+];
+function buildNav() {
+  var n = $('nav'); n.classList.remove('hide');
+  n.innerHTML = VIEWS.filter(function (v) { return !v.owner || isOwner(); })
+    .map(function (v) { return '<button data-v="' + v.id + '">' + v.name + '</button>'; }).join('');
+  n.onclick = function (e) { var b = e.target.closest('button'); if (b) { S.view = b.getAttribute('data-v'); render(); } };
+}
+function render() {
+  Array.prototype.forEach.call($('nav').children, function (b) { b.classList.toggle('on', b.getAttribute('data-v') === S.view); });
+  window.scrollTo(0, 0);
+  ({ home: viewHome, sell: viewSell, stock: viewStock, acc: viewAcc, exp: viewExp, staff: viewStaff, fin: viewFin, report: viewReport, more: viewMore }[S.view])();
+}
+function subTabs(view, tabs) {
+  var cur = S.sub[view];
+  if (!tabs.some(function (t) { return t[0] === cur; })) cur = tabs[0][0];
+  S.sub[view] = cur;
+  return '<div class="sub" id="sub">' + tabs.map(function (t) { return '<button data-s="' + t[0] + '" class="' + (t[0] === cur ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') + '</div>';
+}
+function bindSub(view) { $('sub').onclick = function (e) { var b = e.target.closest('button'); if (b) { S.sub[view] = b.getAttribute('data-s'); render(); } }; }
+
+/* ---------- dashboard ---------- */
+function viewHome() {
+  $('app').innerHTML = '<div class="card">Loading...</div>';
+  var got = S.prefetchDash ? Promise.resolve(S.prefetchDash) : call('dashboard', {}, true);
+  S.prefetchDash = null;
+  got.then(function (d) { try { renderHome(d); } catch (e) {
+    $('app').innerHTML = '<div class="card">Could not show the dashboard: ' + esc(e.message) + '. If you just updated, make sure Code.gs and Index are the same version and deploy a New version.</div>'; }
+  }, function () { $('app').innerHTML = '<div class="card">Could not load the dashboard. Pull down to refresh or log in again.</div>'; });
+}
+function renderHome(d) {
+  {
+    var low = d.lowStock.length ? '<div class="card"><h3>Low Stock Accessories</h3><table class="tbl">' +
+      d.lowStock.map(function (x) { return '<tr><td>' + esc(x.name) + '</td><td class="n"><span class="pill low">' + x.stock + ' pcs</span></td></tr>'; }).join('') + '</table></div>' : '';
+    if (d.role !== 'Owner') {
+      var mine = function (x) { return stat('Phones Sold', x.phoneCount) + stat('Accessories Sold', x.accQty + ' pcs') + stat('Total Sales', tk(x.totalSales)); };
+      $('app').innerHTML = '<div class="card"><h3>Your Sales Today</h3><div class="grid">' + mine(d.today) + '</div></div>' +
+        '<div class="card"><h3>Your Sales This Month</h3><div class="grid">' + mine(d.month) + '</div></div>' +
+        '<div class="card"><h3>Stock</h3><div class="grid">' + stat('Phones in Stock', d.stockPhones) + '</div></div>' + low;
+      return;
+    }
+    var t = d.today, m = d.month;
+    $('app').innerHTML =
+      '<div class="card"><h3>Today</h3><div class="grid">' +
+      stat('Phones Sold', t.phoneCount) + stat('Total Sales', tk(t.totalSales)) + stat('Gross Profit', tk(t.grossProfit)) +
+      stat('Expenses + Salary', tk(t.expenses + t.staffPaid)) + stat('Net Profit', tk(t.netProfit), signCls(t.netProfit)) + stat('Net Cash', tk(t.netCash), signCls(t.netCash)) +
+      '</div></div>' +
+      '<div class="card"><h3>This Month</h3><div class="grid">' +
+      stat('Phones Sold', m.phoneCount) + stat('Total Sales', tk(m.totalSales)) + stat('Gross Profit', tk(m.grossProfit)) +
+      stat('Expenses + Salary', tk(m.expenses + m.staffPaid)) + stat('Net Profit', tk(m.netProfit), signCls(m.netProfit)) +
+      '</div></div>' +
+      '<div class="card"><h3>Stock</h3><div class="grid">' +
+      stat('Phones in Stock', d.stockPhones) + stat('Phone Stock Value', tk(d.stockPhoneValue)) + stat('Accessories Stock Value', tk(d.stockAccValue)) +
+      '</div></div>' +
+      (!d.finance ? '' : '<div class="card"><h3>Money</h3><div class="grid">' +
+      stat('Cash &amp; Bank Balance', tk(d.finance.cashBalance), signCls(d.finance.cashBalance)) + stat('Loans to Repay', tk(d.finance.loanOutstanding), d.finance.loanOutstanding > 0 ? 'bad' : '') +
+      stat('Net Worth', tk(d.finance.netWorth), signCls(d.finance.netWorth)) + '</div></div>') + low +
+      (d.staffMonth.length ? '<div class="card"><h3>Sales by Staff (This Month)</h3><table class="tbl"><tr><th>Staff</th><th class="n">Phones</th><th class="n">Total Sales</th></tr>' +
+        d.staffMonth.map(function (s) { return '<tr><td>' + esc(s.name) + '</td><td class="n">' + s.phones + '</td><td class="n">' + tk(s.sales) + '</td></tr>'; }).join('') + '</table></div>' : '');
+  }
+}
+
+/* ---------- sales ---------- */
+function viewSell() {
+  var tabs = [['phone', 'Sell Phone'], ['acc', 'Sell Accessories'], ['list', 'Sales History']];
+  if (isOwner()) tabs.push(['ret', 'Returns']);
+  var html = subTabs('sell', tabs);
+  var s = S.sub.sell;
+  if (s === 'phone') html += sellPhoneForm();
+  if (s === 'acc') html += '<div id="accSell"></div>';
+  if (s === 'ret') html += '<div id="retBox"></div>';
+  if (s === 'list') html += '<div class="card"><div class="row">' + field('From', inp('sFrom', { type: 'date', v: S.salesFrom || today() })) +
+    field('To', inp('sTo', { type: 'date', v: S.salesTo || today() })) +
+    (isOwner() ? field('Staff', '<select id="sWho"><option value="">All staff</option>' + opts(S.boot.staffNames, S.salesWho) + '</select>') : '') +
+    '<button class="btn" id="sLoad">Show</button></div></div><div id="sList"></div>';
+  $('app').innerHTML = html; bindSub('sell');
+  if (s === 'phone') bindSellPhone();
+  if (s === 'acc') renderAccSell();
+  if (s === 'list') { $('sLoad').onclick = loadSales; loadSales(); }
+  if (s === 'ret') viewReturns();
+}
+
+function sellPhoneForm() {
+  var L = S.boot.lists;
+  return '<div class="card"><h3>1. Find Phone</h3><div class="row">' + field('IMEI (full or last 4-6 digits)', inp('fImei', { mode: 'numeric' })) +
+    '<button class="btn" id="fBtn">Search</button></div><div id="fRes" style="margin-top:10px"></div></div>' +
+    '<div class="card"><h3>2. Sale Details</h3><div class="form">' +
+    field('Date', inp('spDate', { type: 'date', v: today() })) +
+    field('Sale Price (Tk)', inp('spPrice', { type: 'number', mode: 'numeric' })) +
+    field('Discount (Tk)', inp('spDisc', { type: 'number', v: 0 })) +
+    field('Customer Name', inp('spCust')) + field('Customer Mobile', inp('spMob', { mode: 'tel' })) +
+    field('Customer Address (optional)', inp('spAddr')) +
+    field('Payment Method', '<select id="spPay">' + opts(L.paymentMethods) + '</select>') +
+    field('Warranty', inp('spWar', { ph: 'e.g. 1 year official warranty' })) +
+    '</div><div style="margin-top:12px" class="chk"><input type="checkbox" id="spEx"> <label for="spEx" style="margin:0;color:var(--ink)">Customer is giving an old phone in exchange</label></div>' +
+    '<div id="exBox" class="hide" style="margin-top:12px"><h3>Exchange Phone</h3>' + phoneFields('ex', true) + sellerFields('ex', true) + '</div>' +
+    '<h3 style="margin-top:18px">Accessories with this phone (optional)</h3><div class="form">' +
+    field('Item', '<select id="paItem"><option value="">Loading...</option></select>') + field('Quantity', inp('paQty', { type: 'number', v: 1 })) +
+    field('Unit Price (Tk)', inp('paPrice', { type: 'number' })) + '</div><div class="actions"><button class="btn sec" id="paAdd">+ Add Accessory</button></div>' +
+    '<div id="paList" style="margin-top:8px"></div>' +
+    '<div class="total-box" id="spTotal"></div>' +
+    '<div class="actions"><button class="btn" id="spSave">Complete Sale &amp; Print Memo</button></div></div>';
+}
+
+function bindSellPhone() {
+  S.selPhone = null;
+  S.phoneAcc = [];
+  var accMap = {};
+  call('accList', {}, true).then(function (items) {
+    items.forEach(function (i) { accMap[i.code] = i; });
+    $('paItem').innerHTML = '<option value="">-- Select --</option>' + items.map(function (i) {
+      return '<option value="' + esc(i.code) + '"' + (i.stock <= 0 ? ' disabled' : '') + '>' + esc(i.name) + ' (stock ' + i.stock + ', ' + tk(i.price) + ')</option>'; }).join('');
+  });
+  $('paItem').onchange = function () { var it = accMap[this.value]; $('paPrice').value = it ? it.price : ''; };
+  var drawPa = function () {
+    $('paList').innerHTML = S.phoneAcc.length ? '<table class="tbl" id="paTbl">' + S.phoneAcc.map(function (c, i) {
+      return '<tr><td>' + esc(c.name) + '</td><td class="n">' + c.qty + ' x ' + tk(c.unitPrice) + '</td><td class="n">' + tk(c.qty * c.unitPrice) +
+        '</td><td><button class="btn bad sm" data-rm="' + i + '">x</button></td></tr>'; }).join('') + '</table>' : '';
+    if ($('paTbl')) $('paTbl').onclick = function (e) { var b = e.target.closest('[data-rm]'); if (b) { S.phoneAcc.splice(Number(b.getAttribute('data-rm')), 1); drawPa(); upd(); } };
+  };
+  $('paAdd').onclick = function () {
+    var code = val('paItem'); if (!code) return toast('Select an accessory', true);
+    var qty = Number(val('paQty')) || 0; if (qty <= 0) return toast('Enter quantity', true);
+    var it = accMap[code];
+    S.phoneAcc.push({ code: code, name: it.name, qty: qty, unitPrice: Number(val('paPrice')) || it.price, discount: 0, cost: it.cost });
+    $('paItem').value = ''; $('paQty').value = 1; $('paPrice').value = '';
+    drawPa(); upd();
+  };
+  var find = function () {
+    call('phoneFind', { q: val('fImei') }).then(function (list) {
+      if (!list.length) { $('fRes').innerHTML = '<div class="muted">No phone in stock with this IMEI.</div>'; return; }
+      $('fRes').innerHTML = list.map(function (p, i) {
+        return '<div class="item" data-i="' + i + '"><div><b>' + esc(p.brand + ' ' + p.model) + '</b> ' + esc(p.variant || '') + ' ' + esc(p.color || '') +
+          '<div class="muted">IMEI: ' + esc(p.imei1) + ' · ' + esc(p.type) + '</div></div><div class="n"><b>' + tk(p.asking) + '</b>' +
+          (p.cost != null ? '<div class="muted">Cost ' + tk(p.cost) + '</div>' : '') + '</div></div>';
+      }).join('');
+      $('fRes').onclick = function (e) {
+        var it = e.target.closest('.item'); if (!it) return;
+        S.selPhone = list[Number(it.getAttribute('data-i'))];
+        Array.prototype.forEach.call(this.children, function (x) { x.classList.toggle('sel', x === it); });
+        if (!val('spPrice')) $('spPrice').value = S.selPhone.asking || '';
+        upd();
+      };
+      if (list.length === 1) $('fRes').firstChild.click();
+    });
+  };
+  $('fBtn').onclick = find;
+  $('fImei').onkeydown = function (e) { if (e.key === 'Enter') find(); };
+  $('spEx').onchange = function () { $('exBox').classList.toggle('hide', !this.checked); upd(); };
+  ['spPrice', 'spDisc', 'exCost'].forEach(function (id) { $(id).oninput = upd; });
+  function upd() {
+    var price = Number(val('spPrice')) || 0, disc = Number(val('spDisc')) || 0, ex = checked('spEx') ? (Number(val('exCost')) || 0) : 0;
+    var acc = (S.phoneAcc || []).reduce(function (a, c) { return a + c.qty * c.unitPrice; }, 0);
+    var accProfit = (S.phoneAcc || []).reduce(function (a, c) { return a + c.qty * (c.unitPrice - (c.cost || 0)); }, 0);
+    $('spTotal').innerHTML = (S.selPhone ? '<div><span>Phone</span><b>' + esc(S.selPhone.brand + ' ' + S.selPhone.model) + '</b></div>' : '<div class="muted">Select a phone above first</div>') +
+      '<div><span>Phone Price</span><span>' + tk(price) + '</span></div>' + (acc ? '<div><span>Accessories</span><span>' + tk(acc) + '</span></div>' : '') +
+      '<div><span>Discount</span><span>- ' + tk(disc) + '</span></div>' +
+      (ex ? '<div><span>Exchange Phone</span><span>- ' + tk(ex) + '</span></div>' : '') +
+      '<div class="big"><span>Total Payable</span><span>' + tk(price + acc - disc - ex) + '</span></div>' +
+      (S.selPhone && S.selPhone.cost != null ? '<div class="muted"><span>Profit</span><span>' + tk(price - disc - S.selPhone.cost + accProfit) + '</span></div>' : '');
+  }
+  upd();
+  $('spSave').onclick = function () {
+    if (!S.selPhone) return toast('Select a phone first', true);
+    var p = { phoneId: S.selPhone.id, date: val('spDate'), salePrice: val('spPrice'), discount: val('spDisc'), customerName: val('spCust'),
+              customerMobile: val('spMob'), customerAddress: val('spAddr'), paymentMethod: val('spPay'), warranty: val('spWar') };
+    if (checked('spEx')) { p.exchange = readPhone('ex'); p.exchange.seller = readSeller('ex'); }
+    if (S.phoneAcc.length) p.accLines = S.phoneAcc.map(function (c) { return { code: c.code, qty: c.qty, unitPrice: c.unitPrice, discount: 0 }; });
+    call('phoneSell', p).then(function (memo) { toast('Sale completed'); S.sub.sell = 'phone'; render(); showMemo(memo); });
+  };
+}
+
+function phoneFields(px, forExchange) {
+  var L = S.boot.lists;
+  return '<div class="form">' +
+    field('IMEI 1', inp(px + 'Imei1', { mode: 'numeric', ph: 'Dial *#06# to see' })) + field('IMEI 2', inp(px + 'Imei2', { mode: 'numeric' })) +
+    field('Brand', inp(px + 'Brand', { ph: 'Samsung, Xiaomi, Apple...' })) + field('Model', inp(px + 'Model')) +
+    field('RAM/ROM', inp(px + 'Variant', { ph: '8/128' })) + field('Color', inp(px + 'Color')) +
+    field('Phone Type', '<select id="' + px + 'Type">' + opts(L.phoneTypes, forExchange ? L.phoneTypes[2] : null) + '</select>') +
+    field(forExchange ? 'Exchange Value (Tk)' : 'Purchase Price (Tk)', inp(px + 'Cost', { type: 'number', mode: 'numeric' })) +
+    field('Expected Sale Price (Tk)', inp(px + 'Asking', { type: 'number', mode: 'numeric' })) +
+    field('Condition / Note', inp(px + 'Cond', { ph: 'Battery 85%, no box...' })) + '</div>';
+}
+function readPhone(px) {
+  return { imei1: val(px + 'Imei1'), imei2: val(px + 'Imei2'), brand: val(px + 'Brand'), model: val(px + 'Model'), variant: val(px + 'Variant'),
+           color: val(px + 'Color'), type: val(px + 'Type'), cost: val(px + 'Cost'), asking: val(px + 'Asking'), condition: val(px + 'Cond') };
+}
+function sellerFields(px, optionalNameMobile) {
+  return '<h3 style="margin-top:14px">Seller Information</h3><div class="form">' +
+    field('Name' + (optionalNameMobile ? ' (blank = customer name)' : ''), inp(px + 'SName')) +
+    field('Mobile' + (optionalNameMobile ? ' (blank = customer mobile)' : ''), inp(px + 'SMob', { mode: 'tel' })) +
+    field('NID Number', inp(px + 'SNid', { mode: 'numeric' })) + field('Address', inp(px + 'SAddr')) + '</div>' +
+    '<div class="row" style="margin-top:10px"><div class="chk"><input type="checkbox" id="' + px + 'SNidCopy"> NID copy kept</div>' +
+    '<div class="chk"><input type="checkbox" id="' + px + 'SPhoto"> Photo of phone and seller taken</div></div>';
+}
+function readSeller(px) {
+  return { name: val(px + 'SName'), mobile: val(px + 'SMob'), nid: val(px + 'SNid'), address: val(px + 'SAddr'),
+           nidCopy: checked(px + 'SNidCopy'), photo: checked(px + 'SPhoto') };
+}
+
+function renderAccSell() {
+  var L = S.boot.lists;
+  call('accList', {}, true).then(function (items) {
+    var map = {}; items.forEach(function (i) { map[i.code] = i; });
+    var F = S.accForm || (S.accForm = { date: today(), cust: '', mob: '', pay: '', inv: '' });
+    if (S.addToInvoice) { F.inv = S.addToInvoice; S.addToInvoice = null; }
+    var keep = function () { if ($('asDate')) { F.date = val('asDate'); F.cust = val('asCust'); F.mob = val('asMob'); F.pay = val('asPay'); F.inv = val('asInv'); } };
+    function draw() {
+      var total = 0;
+      var rows = S.cart.map(function (c, i) {
+        var line = c.qty * c.unitPrice - c.discount; total += line;
+        return '<tr><td>' + esc(map[c.code] ? map[c.code].name : c.code) + '</td><td class="n">' + c.qty + ' x ' + tk(c.unitPrice) + (c.discount ? '<div class="muted">-' + tk(c.discount) + '</div>' : '') +
+          '</td><td class="n">' + tk(line) + '</td><td><button class="btn bad sm" data-rm="' + i + '">x</button></td></tr>';
+      }).join('');
+      $('accSell').innerHTML = '<div class="card"><h3>Add Item</h3><div class="form">' +
+        field('Item', '<select id="asItem"><option value="">-- Select --</option>' + items.map(function (i) {
+          return '<option value="' + esc(i.code) + '"' + (i.stock <= 0 ? ' disabled' : '') + '>' + esc(i.name) + ' (stock ' + i.stock + ', ' + tk(i.price) + ')</option>'; }).join('') + '</select>') +
+        field('Quantity', inp('asQty', { type: 'number', v: 1 })) + field('Unit Price (Tk)', inp('asPrice', { type: 'number' })) + field('Discount (Tk)', inp('asDisc', { type: 'number', v: 0 })) +
+        '</div><div class="actions"><button class="btn sec" id="asAdd">+ Add to Bill</button></div></div>' +
+        '<div class="card"><h3>Bill</h3>' + (S.cart.length ? '<table class="tbl" id="asCart">' + rows + '</table>' : '<div class="muted">No items added yet</div>') +
+        '<div class="total-box"><div class="big"><span>Total Payable</span><span>' + tk(total) + '</span></div></div><div class="form" style="margin-top:12px">' +
+        field('Add to Existing Memo No. (optional)', inp('asInv', { v: F.inv, ph: 'e.g. INV-00012 or 12' })) +
+        '<div id="asNewCust"' + (F.inv ? ' class="hide"' : '') + ' style="display:contents">' +
+        field('Date', inp('asDate', { type: 'date', v: F.date })) + field('Customer Name (optional)', inp('asCust', { v: F.cust })) +
+        field('Customer Mobile (optional)', inp('asMob', { mode: 'tel', v: F.mob })) + '</div>' +
+        field('Payment Method', '<select id="asPay">' + opts(L.paymentMethods, F.pay) + '</select>') +
+        '</div><div class="muted" id="asInvNote" style="margin-top:8px">' + (F.inv ? 'These items will be added to memo ' + esc(F.inv) + ' with the same customer and date.' : 'Leave the memo number blank for a new memo.') + '</div>' +
+        '<div class="actions"><button class="btn" id="asSave"' + (S.cart.length ? '' : ' disabled') + '>' + (F.inv ? 'Add to Memo &amp; Print' : 'Complete Sale &amp; Print Memo') + '</button></div></div>';
+      $('asInv').oninput = function () {
+        var on = !!val('asInv');
+        $('asNewCust').classList.toggle('hide', on);
+        $('asInvNote').textContent = on ? 'These items will be added to memo ' + val('asInv') + ' with the same customer and date.' : 'Leave the memo number blank for a new memo.';
+        $('asSave').innerHTML = on ? 'Add to Memo &amp; Print' : 'Complete Sale &amp; Print Memo';
+      };
+      $('asItem').onchange = function () { var it = map[this.value]; $('asPrice').value = it ? it.price : ''; };
+      $('asAdd').onclick = function () {
+        var code = val('asItem'); if (!code) return toast('Select an item', true);
+        var qty = Number(val('asQty')) || 0; if (qty <= 0) return toast('Enter quantity', true);
+        S.cart.push({ code: code, qty: qty, unitPrice: Number(val('asPrice')) || map[code].price, discount: Number(val('asDisc')) || 0 });
+        keep(); draw();
+      };
+      if ($('asCart')) $('asCart').onclick = function (e) { var b = e.target.closest('[data-rm]'); if (b) { S.cart.splice(Number(b.getAttribute('data-rm')), 1); keep(); draw(); } };
+      $('asSave').onclick = function () {
+        call('accSell', { lines: S.cart, invoice: val('asInv'), date: val('asDate'), customerName: val('asCust'), customerMobile: val('asMob'), paymentMethod: val('asPay') })
+          .then(function (memo) { S.cart = []; S.accForm = null; toast(val('asInv') ? 'Added to memo ' + memo.invoice : 'Sale completed'); renderAccSell(); showMemo(memo); });
+      };
+    }
+    draw();
+  });
+}
+
+function loadSales() {
+  S.salesFrom = val('sFrom'); S.salesTo = val('sTo'); S.salesWho = val('sWho');
+  call('salesList', { from: S.salesFrom, to: S.salesTo, soldBy: S.salesWho }).then(function (d) {
+    var own = isOwner();
+    var all = d.phones.concat(d.acc);
+    var tot = all.reduce(function (a, x) { return a + x.amount; }, 0), prof = all.reduce(function (a, x) { return a + (x.profit || 0); }, 0);
+    var row = function (x) {
+      return '<tr><td>' + esc(prettyDate(x.date)) + '<div class="muted">' + esc(x.invoice) + '</div></td><td>' + esc(x.item) + (x.imei ? '<div class="muted">' + esc(x.imei) + '</div>' : '') +
+        (x.exchange ? '<div class="muted">Exchange ' + tk(x.exchange) + '</div>' : '') +
+        (x.returned ? ' <span class="pill low">Returned' + (x.kind === 'acc' ? ' ' + x.returned : '') + '</span>' : '') + '</td><td>' + esc(x.customer) + '<div class="muted">' + esc(x.mobile) + '</div></td>' +
+        '<td>' + esc(x.soldBy) + '<div class="muted">' + esc(x.payment) + '</div></td><td class="n">' + tk(x.amount) + '</td>' +
+        (own ? '<td class="n">' + tk(x.profit) + '</td>' : '') +
+        '<td style="white-space:nowrap"><button class="btn sec sm" data-memo="' + esc(x.invoice) + '">Memo</button>' +
+        (own ? ' <button class="btn sec sm" data-ret="' + esc(x.invoice) + '">Return</button> <button class="btn bad sm" data-del="' + esc(x.kind + '|' + x.id) + '">Delete</button>' : '') + '</td></tr>';
+    };
+    $('sList').innerHTML = '<div class="card"><div class="grid">' + stat('Total Sales', tk(tot)) + stat('Phones Sold', d.phones.length) +
+      (own ? stat('Profit', tk(prof), signCls(prof)) : '') + '</div></div><div class="card scroll"><table class="tbl" id="sTbl"><tr><th>Date</th><th>Item</th><th>Customer</th><th>Sold By</th><th class="n">Amount</th>' +
+      (own ? '<th class="n">Profit</th>' : '') + '<th></th></tr>' + (all.length ? all.map(row).join('') : '<tr><td colspan="7" class="muted">No sales found</td></tr>') + '</table></div>';
+    $('sTbl').onclick = function (e) {
+      var m = e.target.closest('[data-memo]');
+      if (m) { call('memoGet', { invoice: m.getAttribute('data-memo') }).then(showMemo); return; }
+      var rt = e.target.closest('[data-ret]');
+      if (rt) { S.retInvoice = rt.getAttribute('data-ret'); S.sub.sell = 'ret'; render(); return; }
+      var b = e.target.closest('[data-del]'); if (!b) return;
+      var parts = b.getAttribute('data-del').split('|');
+      if (!confirm('Delete this sale? Use this only for a wrong entry. For a customer return, use Return instead.')) return;
+      call(parts[0] === 'phone' ? 'phoneSaleDelete' : 'accSaleDelete', { id: parts[1] }).then(function () { toast('Deleted'); loadSales(); });
+    };
+  });
+}
+
+/* ---------- return to supplier ---------- */
+function viewSupplierReturn(accFirst) {
+  var L = S.boot.lists;
+  S.supCart = S.supCart || { phones: [], acc: [] };
+  var phoneBlock = '<h4 style="margin:4px 0 8px">Phones</h4><div class="row">' + field('Find phone (IMEI or model)', inp('suQ', { ph: 'Last digits of IMEI or model name' })) +
+    '<button class="btn" id="suFind">Search</button></div><div id="suRes" style="margin-top:10px"></div>';
+  var accBlock = '<h4 style="margin:4px 0 8px">Accessories</h4><div class="form">' + field('Accessory', '<select id="suItem"><option value="">Loading...</option></select>') +
+    field('Quantity', inp('suQty', { type: 'number', v: 1 })) + '</div><div class="actions"><button class="btn sec" id="suAddAcc">+ Add Accessory</button></div>';
+  $('supBox').innerHTML = '<div class="card"><h3>1. Items to Return</h3>' + (accFirst ? accBlock + '<hr style="border:0;border-top:1px solid var(--line);margin:16px 0">' + phoneBlock
+      : phoneBlock + '<hr style="border:0;border-top:1px solid var(--line);margin:16px 0">' + accBlock) +
+    '<h4 style="margin:16px 0 8px">Items in this return</h4><div id="suCart"></div></div>' +
+    '<div class="card"><h3>2. What the Supplier Gives Back</h3><div class="form">' + field('Supplier / Company', inp('suSup')) +
+    field('Settlement', '<select id="suSet"><option>Money back</option><option>Replacement</option><option>No refund</option></select>') +
+    '<div id="suAmtWrap">' + field('Money Received (Tk)', inp('suAmt', { type: 'number' })) + '</div>' +
+    field('Received In', '<select id="suPay">' + opts(L.paymentMethods) + '</select>') + field('Date', inp('suDate', { type: 'date', v: today() })) +
+    field('Reason', inp('suReason', { ph: 'e.g. Faulty, wrong model, extra stock' })) + '</div><div class="total-box" id="suTotal"></div>' +
+    '<div class="actions"><button class="btn" id="suSave">Complete Return to Supplier</button></div></div>' +
+    '<div class="card"><div class="row">' + field('From', inp('slFrom', { type: 'date', v: today().slice(0, 8) + '01' })) + field('To', inp('slTo', { type: 'date', v: today() })) +
+    '<button class="btn sec" id="slGo">Show</button></div></div><div id="supList"></div>';
+  var accMap = {}, found = [], edited = false;
+  call('accList', {}, true).then(function (items) {
+    items.forEach(function (i) { accMap[i.code] = i; });
+    $('suItem').innerHTML = '<option value="">-- Select --</option>' + items.filter(function (i) { return i.stock > 0; }).map(function (i) {
+      return '<option value="' + esc(i.code) + '">' + esc(i.name) + ' (stock ' + i.stock + ', cost ' + tk(i.cost) + ')</option>'; }).join('');
+  });
+  var cost = function () {
+    return S.supCart.phones.reduce(function (a, x) { return a + x.cost; }, 0) + S.supCart.acc.reduce(function (a, x) { return a + x.qty * x.cost; }, 0);
+  };
+  var drawCart = function () {
+    var c = S.supCart;
+    $('suCart').innerHTML = (c.phones.length || c.acc.length) ? '<table class="tbl" id="suCartTbl"><tr><th>Item</th><th class="n">Qty</th><th class="n">Cost</th><th></th></tr>' +
+      c.phones.map(function (x, i) { return '<tr><td><b>' + esc(x.brand + ' ' + x.model) + '</b><div class="muted">' + esc(x.imei1) + ' · ' + esc(x.status) + '</div></td><td class="n">1</td><td class="n">' + tk(x.cost) + '</td><td><button class="btn bad sm" data-rp="' + i + '">x</button></td></tr>'; }).join('') +
+      c.acc.map(function (x, i) { return '<tr><td>' + esc(x.name) + '</td><td class="n">' + x.qty + '</td><td class="n">' + tk(x.qty * x.cost) + '</td><td><button class="btn bad sm" data-ra="' + i + '">x</button></td></tr>'; }).join('') +
+      '</table>' : '<div class="muted">No items added yet</div>';
+    if ($('suCartTbl')) $('suCartTbl').onclick = function (e) {
+      var a = e.target.closest('[data-rp]'), b = e.target.closest('[data-ra]');
+      if (a) c.phones.splice(Number(a.getAttribute('data-rp')), 1);
+      if (b) c.acc.splice(Number(b.getAttribute('data-ra')), 1);
+      if (a || b) { drawCart(); calc(); }
+    };
+  };
+  var calc = function () {
+    var total = cost(), set = val('suSet');
+    $('suAmtWrap').classList.toggle('hide', set !== 'Money back');
+    if (!edited) $('suAmt').value = total || '';
+    var back = set === 'Money back' ? (Number(val('suAmt')) || 0) : set === 'Replacement' ? total : 0;
+    $('suTotal').innerHTML = '<div><span>Cost of items returned</span><span>' + tk(total) + '</span></div>' +
+      '<div><span>' + (set === 'Replacement' ? 'Replacement value' : 'Money back') + '</span><span>' + tk(back) + '</span></div>' +
+      '<div class="big"><span>' + (back - total < 0 ? 'Loss' : 'Difference') + '</span><span>' + tk(back - total) + '</span></div>' +
+      (set === 'Replacement' ? '<div class="muted">After saving, add the replacement in Phone Stock &gt; Add Phone or Accessories &gt; Purchase Stock at the same cost.</div>' : '');
+  };
+  $('suFind').onclick = function () {
+    call('supFind', { q: val('suQ') }).then(function (list) {
+      found = list;
+      $('suRes').innerHTML = list.length ? list.map(function (x, i) {
+        return '<div class="item" data-i="' + i + '"><div><b>' + esc(x.brand + ' ' + x.model) + '</b> ' + esc(x.variant || '') + '<div class="muted">' + esc(x.imei1) + ' · ' + esc(x.status) +
+          (x.supplier ? ' · from ' + esc(x.supplier) : '') + '</div></div><div class="n">' + tk(x.cost) + '<div class="muted">tap to add</div></div></div>';
+      }).join('') : '<div class="muted">No phone in stock matches.</div>';
+    });
+  };
+  $('suQ').onkeydown = function (e) { if (e.key === 'Enter') $('suFind').click(); };
+  $('suRes').onclick = function (e) {
+    var it = e.target.closest('.item'); if (!it) return;
+    var x = found[Number(it.getAttribute('data-i'))];
+    if (!S.supCart.phones.some(function (p) { return p.id === x.id; })) S.supCart.phones.push(x);
+    if (!val('suSup') && x.supplier) $('suSup').value = x.supplier;
+    drawCart(); calc();
+  };
+  $('suAddAcc').onclick = function () {
+    var code = val('suItem'); if (!code) return toast('Select an accessory', true);
+    var q = Number(val('suQty')) || 0; if (q <= 0) return toast('Enter quantity', true);
+    var it = accMap[code];
+    S.supCart.acc.push({ code: code, name: it.name, qty: q, cost: it.cost });
+    drawCart(); calc();
+  };
+  $('suSet').onchange = calc;
+  $('suAmt').oninput = function () { edited = true; calc(); };
+  $('suSave').onclick = function () {
+    var c = S.supCart;
+    if (!c.phones.length && !c.acc.length) return toast('Add the items you are returning', true);
+    if (!confirm('Return these items to ' + (val('suSup') || 'the supplier') + '?')) return;
+    call('supReturnCreate', { phones: c.phones.map(function (x) { return x.id; }), acc: c.acc.map(function (x) { return { code: x.code, qty: x.qty }; }),
+      settlement: val('suSet'), amount: val('suAmt'), supplier: val('suSup'), paymentMethod: val('suPay'), date: val('suDate'), reason: val('suReason') })
+      .then(function (r) {
+        S.supCart = { phones: [], acc: [] };
+        toast(r.srNo + ' saved' + (r.settlement === 'Replacement' ? '. Now add the replacement to stock.' : ''));
+        viewSupplierReturn(accFirst);
+      });
+  };
+  var loadList = function () {
+    call('supReturnList', { from: val('slFrom'), to: val('slTo') }, true).then(function (list) {
+      var back = list.reduce(function (a, g) { return a + g.amountBack; }, 0), loss = list.reduce(function (a, g) { return a + g.profitImpact; }, 0);
+      $('supList').innerHTML = '<div class="card scroll"><h3>Returns to Suppliers</h3><div class="grid" style="margin-bottom:10px">' + stat('Returns', list.length) +
+        stat('Money Back', tk(back)) + stat('Loss', tk(loss), loss < 0 ? 'bad' : '') + '</div><table class="tbl" id="supTbl"><tr><th>Date</th><th>Supplier</th><th>Items</th><th class="n">Cost</th><th class="n">Back</th><th></th></tr>' +
+        (list.length ? list.map(function (g) {
+          return '<tr><td>' + esc(prettyDate(g.date)) + '<div class="muted">' + esc(g.srNo) + '</div></td><td>' + esc(g.supplier || '-') + '<div class="muted">' + esc(g.settlement) + '</div></td><td>' +
+            g.items.map(function (i) { return esc(i.name) + (i.qty > 1 ? ' x' + i.qty : '') + (i.imei ? '<div class="muted">' + esc(i.imei) + '</div>' : ''); }).join('') +
+            (g.reason ? '<div class="muted">' + esc(g.reason) + '</div>' : '') + '</td><td class="n">' + tk(g.cost) + '</td><td class="n">' + tk(g.amountBack) +
+            '</td><td><button class="btn bad sm" data-undo="' + esc(g.srNo) + '">Undo</button></td></tr>';
+        }).join('') : '<tr><td colspan="6" class="muted">No returns to suppliers in this period</td></tr>') + '</table></div>';
+      $('supTbl').onclick = function (e) {
+        var u = e.target.closest('[data-undo]');
+        if (u && confirm('Undo this return to supplier? The items go back to stock.')) call('supReturnUndo', { srNo: u.getAttribute('data-undo') }).then(function () { toast('Undone'); loadList(); });
+      };
+    });
+  };
+  $('slGo').onclick = loadList;
+  drawCart(); calc(); loadList();
+}
+
+/* ---------- returns ---------- */
+function viewReturns() {
+  var L = S.boot.lists;
+  $('retBox').innerHTML = '<div class="card"><h3>Customer Return</h3><div class="row">' + field('Memo No.', inp('rtInv', { v: S.retInvoice || '', ph: 'e.g. INV-00012 or 12' })) +
+    '<button class="btn" id="rtFind">Find Memo</button></div></div><div id="rtForm"></div>' +
+    '<div class="card"><div class="row">' + field('From', inp('rlFrom', { type: 'date', v: today().slice(0, 8) + '01' })) + field('To', inp('rlTo', { type: 'date', v: today() })) +
+    '<button class="btn sec" id="rlGo">Show Returns</button></div></div><div id="rtList"></div>';
+  var find = function () {
+    S.retInvoice = val('rtInv');
+    if (!S.retInvoice) return toast('Enter the memo number', true);
+    call('returnLookup', { invoice: S.retInvoice }).then(drawReturnForm);
+  };
+  $('rtFind').onclick = find;
+  $('rtInv').onkeydown = function (e) { if (e.key === 'Enter') find(); };
+  $('rlGo').onclick = loadReturnList;
+  if (S.retInvoice) find();
+  loadReturnList();
+}
+
+function returnRows(list, undo) {
+  return list.map(function (g) {
+    return '<tr><td>' + esc(prettyDate(g.date)) + '<div class="muted">' + esc(g.returnNo) + '</div></td><td>' + esc(g.invoice) + '<div class="muted">' + esc(g.customer || '') + '</div></td><td>' +
+      g.items.map(function (i) { return esc(i.name) + (i.qty > 1 ? ' x' + i.qty : '') + (i.restocked ? '' : ' <span class="pill low">Faulty</span>'); }).join('<br>') +
+      (g.reason ? '<div class="muted">' + esc(g.reason) + '</div>' : '') + '</td><td class="n">' + tk(g.refund) + '</td><td class="n" style="color:' + (g.profitImpact < 0 ? 'var(--bad)' : 'var(--ok)') + '">' + tk(g.profitImpact) +
+      '</td><td style="white-space:nowrap"><button class="btn sec sm" data-rcpt="' + esc(g.returnNo) + '">Receipt</button>' + (undo ? ' <button class="btn bad sm" data-undo="' + esc(g.returnNo) + '">Undo</button>' : '') + '</td></tr>';
+  }).join('');
+}
+function returnTableClick(after) {
+  return function (e) {
+    var r = e.target.closest('[data-rcpt]');
+    if (r) { call('returnReceipt', { returnNo: r.getAttribute('data-rcpt') }).then(showMemo); return; }
+    var u = e.target.closest('[data-undo]');
+    if (u && confirm('Undo this return? Items go back to the customer sale and the refund is removed from the accounts.')) {
+      call('returnUndo', { returnNo: u.getAttribute('data-undo') }).then(function () { toast('Return undone'); after(); });
+    }
+  };
+}
+function loadReturnList() {
+  call('returnList', { from: val('rlFrom'), to: val('rlTo') }, true).then(function (list) {
+    var refund = list.reduce(function (a, g) { return a + g.refund; }, 0);
+    $('rtList').innerHTML = '<div class="card scroll"><h3>Returns</h3><div class="grid" style="margin-bottom:10px">' + stat('Returns', list.length) + stat('Total Refunded', tk(refund)) + '</div>' +
+      '<table class="tbl" id="rlTbl"><tr><th>Date</th><th>Memo</th><th>Items</th><th class="n">Refund</th><th class="n">Profit Effect</th><th></th></tr>' +
+      (list.length ? returnRows(list, true) : '<tr><td colspan="6" class="muted">No returns in this period</td></tr>') + '</table></div>';
+    $('rlTbl').onclick = returnTableClick(function () { loadReturnList(); if (S.retInvoice && $('rtForm').innerHTML) $('rtFind').click(); });
+  });
+}
+
+function drawReturnForm(d) {
+  var L = S.boot.lists;
+  var avail = d.items.filter(function (i) { return i.returnable > 0; });
+  var html = '<div class="card"><h3>Memo ' + esc(d.invoice) + '</h3><div class="muted">' + esc(prettyDate(d.date)) + ' · ' + esc(d.customer || 'No name') + ' ' + esc(d.mobile || '') + ' · Sold by ' + esc(d.soldBy) + '</div>';
+  if (!avail.length) html += '<div style="margin-top:12px" class="muted">Everything on this memo has already been returned.</div>';
+  html += '<div style="margin-top:12px">' + d.items.map(function (it, i) {
+    var dis = it.returnable <= 0;
+    var head = '<label class="chk" style="font-weight:600"><input type="checkbox" data-i="' + i + '" class="rtPick"' + (dis ? ' disabled' : '') + '> ' + esc(it.name) +
+      (it.imei ? ' <span class="muted">(' + esc(it.imei) + ')</span>' : '') + (dis ? ' <span class="pill sold">Returned</span>' : '') + '</label>';
+    var body = '';
+    if (!dis) {
+      body = '<div class="form" style="margin:8px 0 0 26px">' +
+        (it.kind === 'Accessory' ? field('Qty to return (max ' + it.returnable + ')', '<input type="number" min="1" max="' + it.returnable + '" value="' + it.returnable + '" id="rtQ' + i + '">') : '') +
+        field('Condition', '<select id="rtC' + i + '"><option value="1">Good: back to stock</option><option value="0">Faulty: keep out of stock</option></select>') + '</div>' +
+        (it.exchange ? '<div class="chk" style="margin:8px 0 0 26px"><input type="checkbox" id="rtE' + i + '"' + (it.exchange.available ? '' : ' disabled') + '> Give back the exchanged phone (' +
+          esc(it.exchange.name) + ', ' + tk(it.exchange.value) + ')' + (it.exchange.available ? '' : ' <span class="muted">(already sold)</span>') + '</div>' : '');
+    }
+    return '<div class="item" style="display:block;cursor:default">' + head + '<div class="muted" style="margin-left:26px">' +
+      (it.kind === 'Phone' ? 'Sold for ' + tk(it.value) : it.qty + ' x ' + tk(it.unitValue)) + '</div>' + body + '</div>';
+  }).join('') + '</div>';
+  if (avail.length) html += '<div class="form" style="margin-top:12px">' + field('Return Date', inp('rtDate', { type: 'date', v: today() })) +
+    field('Refund to Customer (Tk)', inp('rtRefund', { type: 'number' })) + field('Refund Method', '<select id="rtPay">' + opts(L.paymentMethods) + '</select>') +
+    field('Reason', inp('rtReason', { ph: 'e.g. Display problem, changed mind' })) + '</div><div class="total-box" id="rtTotal"></div>' +
+    '<div class="actions"><button class="btn" id="rtSave">Complete Return &amp; Print Receipt</button></div>';
+  if (d.returns.length) html += '<h3 style="margin-top:16px">Earlier returns on this memo</h3><div class="scroll"><table class="tbl" id="rtPrev">' + returnRows(d.returns, true) + '</table></div>';
+  $('rtForm').innerHTML = html + '</div>';
+  if ($('rtPrev')) $('rtPrev').onclick = returnTableClick(function () { $('rtFind').click(); loadReturnList(); });
+  if (!avail.length) return;
+  var edited = false;
+  var picks = function () {
+    var out = [];
+    d.items.forEach(function (it, i) {
+      var cb = document.querySelector('.rtPick[data-i="' + i + '"]');
+      if (!cb || !cb.checked) return;
+      var q = it.kind === 'Phone' ? 1 : Math.min(Number(val('rtQ' + i)) || 0, it.returnable);
+      out.push({ it: it, saleId: it.saleId, qty: q, restock: val('rtC' + i) === '1', giveBackExchange: !!(it.exchange && checked('rtE' + i)) });
+    });
+    return out;
+  };
+  var calc = function () {
+    var ps = picks();
+    var value = 0, ex = 0;
+    ps.forEach(function (x) {
+      value += x.it.kind === 'Phone' ? x.it.value : x.it.unitValue * x.qty;
+      if (x.giveBackExchange) ex += x.it.exchange.value;
+    });
+    var expected = Math.round((value - ex) * 100) / 100;
+    if (!edited) $('rtRefund').value = ps.length ? expected : '';
+    var refund = Number(val('rtRefund')) || 0;
+    $('rtTotal').innerHTML = '<div><span>Value of returned items</span><span>' + tk(value) + '</span></div>' +
+      (ex ? '<div><span>Exchange phone given back</span><span>- ' + tk(ex) + '</span></div>' : '') +
+      (refund < expected ? '<div><span>Deducted</span><span>- ' + tk(expected - refund) + '</span></div>' : '') +
+      '<div class="big"><span>Refund to Customer</span><span>' + tk(refund) + '</span></div>';
+    return expected;
+  };
+  $('rtForm').oninput = $('rtForm').onchange = function (e) { if (e.target.id === 'rtRefund') edited = true; calc(); };
+  calc();
+  $('rtSave').onclick = function () {
+    var ps = picks();
+    if (!ps.length) return toast('Select the items the customer is returning', true);
+    if (!confirm('Complete this return and refund ' + tk(Number(val('rtRefund')) || 0) + '?')) return;
+    call('returnCreate', { invoice: d.invoice, date: val('rtDate'), refund: val('rtRefund'), paymentMethod: val('rtPay'), reason: val('rtReason'),
+      items: ps.map(function (x) { return { saleId: x.saleId, qty: x.qty, restock: x.restock, giveBackExchange: x.giveBackExchange }; }) })
+      .then(function (rc) { toast('Return completed'); showMemo(rc); call('returnLookup', { invoice: d.invoice }).then(drawReturnForm); loadReturnList(); });
+  };
+}
+
+/* ---------- cash memo ---------- */
+function amountInWords(n) {
+  n = Math.round(Math.abs(Number(n) || 0));
+  if (n === 0) return 'Zero Taka Only';
+  var ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen',
+              'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  var tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  function two(x) { return x < 20 ? ones[x] : tens[Math.floor(x / 10)] + (x % 10 ? ' ' + ones[x % 10] : ''); }
+  function three(x) { var h = Math.floor(x / 100), r = x % 100; return (h ? ones[h] + ' Hundred' + (r ? ' ' : '') : '') + (r ? two(r) : ''); }
+  var parts = [], crore = Math.floor(n / 10000000), lakh = Math.floor(n / 100000) % 100, thousand = Math.floor(n / 1000) % 100, rest = n % 1000;
+  if (crore) parts.push(three(crore) + ' Crore');
+  if (lakh) parts.push(two(lakh) + ' Lakh');
+  if (thousand) parts.push(two(thousand) + ' Thousand');
+  if (rest) parts.push(three(rest));
+  return parts.join(' ') + ' Taka Only';
+}
+
+function memoMarkup(r) {
+  var size = r.memoSize || 'A5';
+  var rows = r.lines.map(function (l, i) {
+    return '<tr><td class="c">' + (i + 1) + '</td><td><b>' + esc(l.name) + '</b>' +
+      (l.details && l.details.length ? '<div class="d">' + l.details.map(esc).join('<br>') + '</div>' : '') +
+      '</td><td class="c">' + l.qty + '</td><td class="n">' + tk(l.price) + '</td><td class="n">' + tk(l.total) + '</td></tr>';
+  }).join('');
+  var isRet = r.kind === 'return';
+  var ex = (r.exchanges || []).map(function (x) {
+    return '<div class="ex">' + (isRet ? '' : 'Exchange received: ') + '<b>' + esc(x.name) + '</b>' + (x.imei ? '<br>IMEI: ' + esc(x.imei) : '') + '<br>Value: ' + tk(x.value) + '</div>';
+  }).join('');
+  return '<div class="memo m-' + esc(size) + '">' +
+    '<div class="m-head"><div><div class="m-shop">' + esc(r.shop.name) + '</div><div class="m-sub">' + esc(r.shop.address || '') +
+      (r.shop.phone ? (r.shop.address ? '<br>' : '') + 'Phone: ' + esc(r.shop.phone) : '') + '</div></div><div class="m-tag">' + esc(r.title || 'CASH MEMO') + '</div></div>' +
+    '<div class="m-meta"><div><span>' + esc(r.numberLabel || 'Memo No') + '</span><b>' + esc(r.invoice) + '</b></div><div class="r"><span>Date</span><b>' + esc(prettyDate(r.date)) + '</b></div></div>' +
+    '<div class="m-cust"><div><span>Customer Name</span><b>' + (esc(r.customer) || '&nbsp;') + '</b></div><div><span>Mobile</span><b>' + (esc(r.mobile) || '&nbsp;') + '</b></div>' +
+      (r.address ? '<div class="full"><span>Address</span>' + esc(r.address) + '</div>' : '') + '</div>' +
+    '<table class="m-items"><thead><tr><th class="c">SL</th><th>Description</th><th class="c">Qty</th><th class="n">Unit Price</th><th class="n">Amount</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<div class="m-sum"><div class="m-words"><span>Amount in Words</span><div class="w">' + esc(amountInWords(r.payable)) + '</div>' +
+      '<span>Payment Method</span><div class="w">' + esc(r.payment || 'Cash') + '</div>' + ex + '</div>' +
+      '<table class="m-tot"><tr><td>Subtotal</td><td class="n">' + tk(r.subtotal) + '</td></tr>' +
+      (r.discount ? '<tr><td>' + esc(r.discountLabel || 'Discount') + '</td><td class="n">- ' + tk(r.discount) + '</td></tr>' : '') +
+      (r.exchange ? '<tr><td>' + esc(r.exchangeLabel || 'Exchange Value') + '</td><td class="n">- ' + tk(r.exchange) + '</td></tr>' : '') +
+      '<tr class="grand"><td>' + esc(r.totalLabel || 'Total Payable') + '</td><td class="n">' + tk(r.payable) + '</td></tr>' +
+      (r.refunded ? '<tr><td>Refunded for returns</td><td class="n">- ' + tk(r.refunded) + '</td></tr>' : '') + '</table></div>' +
+    (r.warranty ? '<div class="m-warranty"><b>Warranty:</b> ' + esc(r.warranty) + '</div>' : '') +
+    (r.terms && r.terms.length ? '<div class="m-terms"><b>' + (isRet ? 'Notes' : 'Terms &amp; Conditions') + '</b><ol>' + r.terms.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol></div>' : '') +
+    '<div class="m-sign"><div>Customer Signature</div><div>Authorized Signature<br>' + (isRet ? 'Handled by: ' : 'Sold by: ') + esc(r.soldBy) + '</div></div>' +
+    '<div class="m-foot">Thank you for shopping with us!</div></div>';
+}
+
+function pageRule(size) {
+  if (size === '80mm') return '@page { size: 80mm auto; margin: 2mm; }';
+  if (size === 'A4') return '@page { size: A4 portrait; margin: 0; }';
+  return '@page { size: A5 portrait; margin: 0; }';
+}
+
+function memoDocument(r, withButton) {
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + esc(r.invoice) + '</title><style>' +
+    $('memoCss').textContent + pageRule(r.memoSize) + ' body{margin:0;background:' + (withButton ? '#E9EDF4' : '#fff') + '} .tb{text-align:center;padding:12px} .tb button{font-size:15px;padding:10px 22px;border:0;border-radius:8px;background:#1F3864;color:#fff;cursor:pointer}' +
+    ' @media print{.tb{display:none} body{background:#fff}}</style></head><body>' +
+    (withButton ? '<div class="tb"><button onclick="window.print()">Print / Save as PDF</button></div>' : '') + memoMarkup(r) + '</body></html>';
+}
+
+function printMemo(r) {
+  if (inApp()) { window.AndroidApp.printHtml(memoDocument(r, false), 'Cash Memo ' + r.invoice); return; }
+  $('printArea').innerHTML = memoMarkup(r);
+  $('pageCss').textContent = pageRule(r.memoSize);
+  setTimeout(function () { window.print(); }, 50);
+}
+
+function openMemoTab(r) {
+  var w = window.open('', '_blank');
+  if (!w) return toast('Your browser blocked the new tab. Use the Print button instead.', true);
+  w.document.write(memoDocument(r, true));
+  w.document.close();
+}
+
+function showMemo(r) {
+  var bg = document.createElement('div'); bg.className = 'modal-bg';
+  bg.innerHTML = '<div class="modal wide"><div class="bar"><button class="btn" id="mPrint">' + (inApp() ? 'Print / Save PDF' : 'Print Memo') + '</button>' +
+    (inApp() ? '' : '<button class="btn sec" id="mTab">Open in New Tab / PDF</button>') +
+    (r.invoice && r.invoice !== 'INV-00000' && r.kind !== 'return' ? '<button class="btn sec" id="mAddAcc">+ Add Accessories to this Memo</button>' : '') +
+    '<button class="btn sec" id="mClose">Close</button></div><div class="memo-wrap">' + memoMarkup(r) + '</div></div>';
+  document.body.appendChild(bg);
+  $('mPrint').onclick = function () { printMemo(r); };
+  if ($('mTab')) $('mTab').onclick = function () { openMemoTab(r); };
+  $('mClose').onclick = function () { bg.remove(); };
+  if ($('mAddAcc')) $('mAddAcc').onclick = function () {
+    bg.remove(); S.cart = []; S.accForm = null; S.addToInvoice = r.invoice; S.view = 'sell'; S.sub.sell = 'acc'; render();
+  };
+}
+
+/* ---------- phone stock ---------- */
+function viewStock() {
+  var tabs = [['list', 'Stock List'], ['add', 'Add Phone']];
+  if (isOwner()) tabs.push(['sup', 'Return to Supplier'], ['old', 'Used Phone Purchase Records']);
+  var html = subTabs('stock', tabs), s = S.sub.stock;
+  if (s === 'list') html += '<div class="card"><div class="row">' + field('Search (IMEI, model, brand)', inp('stQ')) +
+    field('Status', '<select id="stSt"><option>In Stock</option><option>Sold</option><option>Faulty</option><option>Returned to Supplier</option><option>Given Back</option><option>All</option></select>') + '<button class="btn" id="stGo">Show</button></div></div><div id="stList"></div>';
+  if (s === 'add') html += '<div class="card"><h3>Phone Details</h3><div class="form">' + field('Date', inp('npDate', { type: 'date', v: today() })) +
+    field('Source', '<select id="npSrc"><option value="Supplier">Supplier</option><option value="Customer Buy">Bought from Customer</option></select>') +
+    '<div id="supWrap">' + field('Supplier Name', inp('npSup')) + '</div></div>' +
+    '<div style="margin-top:10px">' + phoneFields('np') + '</div><div id="npSeller" class="hide">' + sellerFields('np') + '</div>' +
+    '<div class="actions"><button class="btn" id="npSave">Add to Stock</button></div></div>';
+  if (s === 'sup') { $('app').innerHTML = html + '<div id="supBox"></div>'; bindSub('stock'); viewSupplierReturn(); return; }
+  if (s === 'old') html += '<div class="card"><div class="row">' + field('Search (name, mobile, NID, IMEI)', inp('obQ')) + '<button class="btn" id="obGo">Show</button></div></div><div id="obList"></div>';
+  $('app').innerHTML = html; bindSub('stock');
+  if (s === 'list') { $('stGo').onclick = loadStock; $('stQ').onkeydown = function (e) { if (e.key === 'Enter') loadStock(); }; loadStock(); }
+  if (s === 'add') {
+    $('npSrc').onchange = function () { var c = this.value === 'Customer Buy'; $('npSeller').classList.toggle('hide', !c); $('supWrap').classList.toggle('hide', c); };
+    $('npSave').onclick = function () {
+      var ph = readPhone('np'); ph.supplier = val('npSup'); ph.source = val('npSrc');
+      if (ph.source === 'Customer Buy') ph.seller = readSeller('np');
+      call('phoneAdd', { phone: ph, date: val('npDate') }).then(function () { toast('Phone added to stock'); render(); });
+    };
+  }
+  if (s === 'old') { $('obGo').onclick = loadOld; loadOld(); }
+}
+function loadStock() {
+  call('phoneList', { q: val('stQ'), status: val('stSt') }).then(function (list) {
+    var own = isOwner();
+    var tot = list.reduce(function (a, x) { return a + (x.cost || 0); }, 0);
+    $('stList').innerHTML = '<div class="card"><div class="grid">' + stat('Phones', list.length) + stat('Total Purchase Value', tk(tot)) + '</div></div>' +
+      '<div class="card scroll"><table class="tbl" id="stTbl"><tr><th>Phone</th><th>IMEI</th><th>Type</th><th class="n">Cost</th><th class="n">Sale Price</th><th class="n">Days</th><th></th></tr>' +
+      (list.length ? list.map(function (p) {
+        return '<tr><td><b>' + esc(p.brand + ' ' + p.model) + '</b><div class="muted">' + esc([p.variant, p.color, p.condition].filter(Boolean).join(' · ')) + '</div></td>' +
+          '<td>' + esc(p.imei1) + (p.imei2 ? '<div class="muted">' + esc(p.imei2) + '</div>' : '') + '</td><td>' + esc(p.type) + '<div class="muted">' + esc(p.source) + (p.addedBy ? ' · ' + esc(p.addedBy) : '') + '</div></td>' +
+          '<td class="n">' + tk(p.cost) + '</td><td class="n">' + tk(p.asking) + '</td><td class="n">' + p.days + '</td><td>' +
+          (p.status === 'Sold' || p.status === 'Given Back' || p.status === 'Returned to Supplier' ? '<span class="pill sold">' + esc(p.status) + '</span>' : p.status === 'Faulty' ? '<span class="pill low">Faulty</span>' : (own ? '<button class="btn bad sm" data-del="' + esc(p.id) + '">Delete</button>' : '')) + '</td></tr>';
+      }).join('') : '<tr><td colspan="7" class="muted">Nothing found</td></tr>') + '</table></div>';
+    if (own) $('stTbl').onclick = function (e) {
+      var b = e.target.closest('[data-del]'); if (!b) return;
+      if (!confirm('Delete this phone from stock? (Only for wrong entries)')) return;
+      call('phoneDelete', { id: b.getAttribute('data-del') }).then(function () { toast('Deleted'); loadStock(); });
+    };
+  });
+}
+function loadOld() {
+  call('oldBuyList', { q: val('obQ') }).then(function (list) {
+    $('obList').innerHTML = '<div class="card scroll"><table class="tbl"><tr><th>Date</th><th>Seller</th><th>NID</th><th>Phone</th><th class="n">Price</th><th>Documents</th></tr>' +
+      (list.length ? list.map(function (r) {
+        return '<tr><td>' + esc(prettyDate(r.date)) + '<div class="muted">' + esc(r.type) + '</div></td><td>' + esc(r.name) + '<div class="muted">' + esc(r.mobile) + '<br>' + esc(r.address) + '</div></td>' +
+          '<td>' + esc(r.nid) + '</td><td>' + esc(r.model) + '<div class="muted">' + esc(r.imei) + '</div></td><td class="n">' + tk(r.price) + '</td>' +
+          '<td><span class="pill ' + (yes(r.nidCopy) ? '' : 'low') + '">NID copy: ' + (yes(r.nidCopy) ? 'Yes' : 'No') + '</span> <span class="pill ' + (yes(r.photo) ? '' : 'low') + '">Photo: ' + (yes(r.photo) ? 'Yes' : 'No') + '</span><div class="muted">' + esc(r.by) + '</div></td></tr>';
+      }).join('') : '<tr><td colspan="6" class="muted">No records</td></tr>') + '</table></div>';
+  });
+}
+
+/* ---------- accessories ---------- */
+function viewAcc() {
+  var tabs = [['list', 'Item List']];
+  if (isOwner()) tabs.push(['item', 'New Item'], ['buy', 'Purchase Stock'], ['buys', 'Purchase History'], ['sup', 'Return to Supplier']);
+  var html = subTabs('acc', tabs), s = S.sub.acc, L = S.boot.lists;
+  if (s === 'sup') { $('app').innerHTML = html + '<div id="supBox"></div>'; bindSub('acc'); viewSupplierReturn(true); return; }
+  if (s === 'list') html += '<div id="aList"></div>';
+  if (s === 'item') html += '<div class="card"><h3>New Accessory Item</h3><div class="form">' + field('Item Name', inp('aiName', { ph: 'Type-C Charger 25W' })) +
+    field('Category', '<select id="aiCat">' + opts(L.accCategories) + '</select>') + field('Unit Cost (Tk)', inp('aiCost', { type: 'number' })) +
+    field('Sale Price (Tk)', inp('aiPrice', { type: 'number' })) + field('Current Stock (pcs)', inp('aiOpen', { type: 'number', v: 0 })) +
+    field('Low Stock Alert (pcs)', inp('aiAlert', { type: 'number', v: 3 })) + '</div><div class="actions"><button class="btn" id="aiSave">Save</button></div></div>';
+  if (s === 'buy' || s === 'buys') html += '<div id="aBuy"></div>';
+  $('app').innerHTML = html; bindSub('acc');
+  if (s === 'list') loadAcc();
+  if (s === 'item') $('aiSave').onclick = function () {
+    call('accItemSave', { name: val('aiName'), category: val('aiCat'), cost: val('aiCost'), price: val('aiPrice'), openingQty: val('aiOpen'), alert: val('aiAlert') })
+      .then(function (r) { toast('Item saved (' + r.code + ')'); S.sub.acc = 'list'; render(); });
+  };
+  if (s === 'buy') call('accList', {}, true).then(function (items) {
+    $('aBuy').innerHTML = '<div class="card"><h3>Purchase Accessories (adds to stock)</h3><div class="form">' +
+      field('Item', '<select id="abItem">' + items.map(function (i) { return '<option value="' + esc(i.code) + '">' + esc(i.name) + ' (stock ' + i.stock + ')</option>'; }).join('') + '</select>') +
+      field('Date', inp('abDate', { type: 'date', v: today() })) + field('Quantity (pcs)', inp('abQty', { type: 'number' })) + field('Unit Cost (Tk)', inp('abCost', { type: 'number' })) +
+      field('Supplier', inp('abSup')) + field('Payment Method', '<select id="abPay">' + opts(L.paymentMethods) + '</select>') +
+      '</div><div class="actions"><button class="btn" id="abSave">Save</button></div></div>';
+    $('abSave').onclick = function () {
+      call('accPurchase', { code: val('abItem'), date: val('abDate'), qty: val('abQty'), unitCost: val('abCost'), supplier: val('abSup'), paymentMethod: val('abPay') })
+        .then(function (r) { toast('Stock is now ' + r.stock + ' pcs'); render(); });
+    };
+  });
+  if (s === 'buys') call('accPurchaseList', {}).then(function (list) {
+    $('aBuy').innerHTML = '<div class="card scroll"><h3>Purchases This Month</h3><table class="tbl"><tr><th>Date</th><th>Item</th><th class="n">Qty</th><th class="n">Total</th><th>Supplier</th></tr>' +
+      (list.length ? list.map(function (r) { return '<tr><td>' + esc(prettyDate(r.date)) + '</td><td>' + esc(r.name) + '</td><td class="n">' + r.qty + '</td><td class="n">' + tk(r.total) + '</td><td>' + esc(r.supplier) + '</td></tr>'; }).join('')
+        : '<tr><td colspan="5" class="muted">No purchases</td></tr>') + '</table></div>';
+  });
+}
+function loadAcc() {
+  call('accList', {}).then(function (items) {
+    var own = isOwner();
+    $('aList').innerHTML = '<div class="card scroll"><table class="tbl" id="aTbl"><tr><th>Code</th><th>Item</th><th class="n">Cost</th><th class="n">Sale Price</th><th class="n">Stock</th>' + (own ? '<th></th>' : '') + '</tr>' +
+      (items.length ? items.map(function (i) {
+        return '<tr><td>' + esc(i.code) + '</td><td>' + esc(i.name) + '<div class="muted">' + esc(i.category) + '</div></td><td class="n">' + tk(i.cost) + '</td>' +
+          '<td class="n">' + tk(i.price) + '</td><td class="n"><span class="pill ' + (i.low ? 'low' : '') + '">' + i.stock + '</span></td>' +
+          (own ? '<td><button class="btn sec sm" data-ed="' + esc(i.code) + '">Edit</button></td>' : '') + '</tr>';
+      }).join('') : '<tr><td colspan="6" class="muted">No items yet</td></tr>') + '</table></div>';
+    if (own) $('aTbl').onclick = function (e) {
+      var b = e.target.closest('[data-ed]'); if (!b) return;
+      editAccItem(items.filter(function (x) { return x.code === b.getAttribute('data-ed'); })[0]);
+    };
+  });
+}
+function editAccItem(it) {
+  var L = S.boot.lists;
+  var bg = document.createElement('div'); bg.className = 'modal-bg';
+  bg.innerHTML = '<div class="modal"><h3>Edit ' + esc(it.code) + '</h3><div class="form">' + field('Name', inp('eiName', { v: it.name })) +
+    field('Category', '<select id="eiCat">' + opts(L.accCategories, it.category) + '</select>') + field('Unit Cost (Tk)', inp('eiCost', { type: 'number', v: it.cost })) +
+    field('Sale Price (Tk)', inp('eiPrice', { type: 'number', v: it.price })) + field('Low Stock Alert (pcs)', inp('eiAlert', { type: 'number', v: it.alert })) + '</div>' +
+    '<div class="chk" style="margin-top:10px"><input type="checkbox" id="eiOff"> Discontinue this item (hide from lists)</div>' +
+    '<div class="actions"><button class="btn" id="eiSave">Save</button><button class="btn sec" id="eiX">Close</button></div></div>';
+  document.body.appendChild(bg);
+  $('eiX').onclick = function () { bg.remove(); };
+  $('eiSave').onclick = function () {
+    call('accItemSave', { code: it.code, name: val('eiName'), category: val('eiCat'), cost: val('eiCost'), price: val('eiPrice'), alert: val('eiAlert'), active: checked('eiOff') ? 'No' : 'Yes' })
+      .then(function () { bg.remove(); toast('Saved'); loadAcc(); });
+  };
+}
+
+/* ---------- expenses ---------- */
+function viewExp() {
+  var L = S.boot.lists;
+  $('app').innerHTML = '<div class="card"><h3>Add Expense</h3><div class="form">' + field('Date', inp('exDate', { type: 'date', v: today() })) +
+    field('Category', '<select id="exCat">' + opts(L.expenseCategories) + '</select>') + field('Description', inp('exDesc')) +
+    field('Amount (Tk)', inp('exAmt', { type: 'number', mode: 'numeric' })) + field('Payment Method', '<select id="exPay">' + opts(L.paymentMethods) + '</select>') +
+    '</div><div class="actions"><button class="btn" id="exSave">Save</button></div></div>' +
+    '<div class="card"><div class="row">' + field('From', inp('eFrom', { type: 'date', v: isOwner() ? today().slice(0, 8) + '01' : today() })) +
+    field('To', inp('eTo', { type: 'date', v: today() })) + '<button class="btn" id="eGo">Show</button></div></div><div id="eList"></div>';
+  $('exSave').onclick = function () {
+    call('expenseAdd', { date: val('exDate'), category: val('exCat'), description: val('exDesc'), amount: val('exAmt'), paymentMethod: val('exPay') })
+      .then(function () { toast('Expense saved'); $('exAmt').value = ''; $('exDesc').value = ''; loadExp(); });
+  };
+  $('eGo').onclick = loadExp; loadExp();
+}
+function loadExp() {
+  call('expenseList', { from: val('eFrom'), to: val('eTo') }).then(function (list) {
+    var own = isOwner(), tot = list.reduce(function (a, x) { return a + x.amount; }, 0);
+    $('eList').innerHTML = '<div class="card scroll"><div class="grid" style="margin-bottom:10px">' + stat('Total Expenses', tk(tot)) + '</div><table class="tbl" id="eTbl"><tr><th>Date</th><th>Category</th><th>Description</th><th class="n">Amount</th><th>Added By</th>' + (own ? '<th></th>' : '') + '</tr>' +
+      (list.length ? list.map(function (r) {
+        return '<tr><td>' + esc(prettyDate(r.date)) + '</td><td>' + esc(r.category) + '</td><td>' + esc(r.description) + '</td><td class="n">' + tk(r.amount) + '</td><td>' + esc(r.by) + '<div class="muted">' + esc(r.payment) + '</div></td>' +
+          (own ? '<td><button class="btn bad sm" data-del="' + esc(r.id) + '">Delete</button></td>' : '') + '</tr>';
+      }).join('') : '<tr><td colspan="6" class="muted">No expenses</td></tr>') + '</table></div>';
+    if (own) $('eTbl').onclick = function (e) {
+      var b = e.target.closest('[data-del]'); if (!b || !confirm('Delete this expense?')) return;
+      call('expenseDelete', { id: b.getAttribute('data-del') }).then(function () { toast('Deleted'); loadExp(); });
+    };
+  });
+}
+
+/* ---------- staff ---------- */
+function viewStaff() {
+  var html = subTabs('staff', [['list', 'Staff List'], ['add', 'Add Staff'], ['pay', 'Pay Salary / Advance'], ['pays', 'Payment History']]), s = S.sub.staff;
+  var month = today().slice(0, 7);
+  if (s === 'add') html += '<div class="card"><h3>Add Staff</h3><div class="form">' + field('Name', inp('nsName')) + field('Mobile', inp('nsMob', { mode: 'tel' })) +
+    field('Role', '<select id="nsRole">' + opts(S.boot.roles, 'Sales Assistant') + '</select>') + field('Monthly Salary (Tk)', inp('nsSal', { type: 'number' })) +
+    field('Joining Date', inp('nsJoin', { type: 'date', v: today() })) + field('Login PIN (4-8 digits)', inp('nsPin', { mode: 'numeric' })) +
+    '</div><div class="muted" style="margin-top:8px">Sales Assistant: can only sell phones and accessories and print memos for their own sales. Cannot see stock, purchase prices, profit, expenses, reports or finance. Owner, Manager, Marketing Manager and Sales Executive: full access to everything.</div>' +
+    '<div class="actions"><button class="btn" id="nsSave">Save</button></div></div>';
+  if (s === 'list' || s === 'pay' || s === 'pays') html += '<div class="card"><div class="row">' + field('Month', inp('stMonth', { type: 'month', v: S.staffMonth || month })) + '<button class="btn" id="smGo">Show</button></div></div><div id="stfBox"></div>';
+  $('app').innerHTML = html; bindSub('staff');
+  if (s === 'add') $('nsSave').onclick = function () {
+    call('staffSave', { name: val('nsName'), mobile: val('nsMob'), role: val('nsRole'), salary: val('nsSal'), joinDate: val('nsJoin'), pin: val('nsPin') })
+      .then(function () { toast('Staff added'); S.sub.staff = 'list'; render(); });
+  };
+  if ($('smGo')) $('smGo').onclick = function () { S.staffMonth = val('stMonth'); render(); };
+  var m = val('stMonth');
+  if (s === 'list') call('staffList', { month: m }).then(function (list) {
+    $('stfBox').innerHTML = '<div class="card scroll"><table class="tbl" id="sfTbl"><tr><th>Name</th><th class="n">Salary</th><th class="n">Paid</th><th class="n">Advance</th><th class="n">Due</th><th></th></tr>' +
+      list.map(function (u, i) {
+        return '<tr' + (u.active ? '' : ' style="opacity:.5"') + '><td><b>' + esc(u.name) + '</b><div class="muted">' + esc(u.role) + (u.mobile ? ' · ' + esc(u.mobile) : '') + '</div></td><td class="n">' + tk(u.salary) +
+          '</td><td class="n">' + tk(u.salaryPaid) + '</td><td class="n">' + tk(u.advance) + '</td><td class="n"><b>' + tk(u.due) + '</b></td><td><button class="btn sec sm" data-i="' + i + '">Edit</button></td></tr>';
+      }).join('') + '</table><div class="muted" style="margin-top:8px">Due = monthly salary - salary paid - advance (for the selected month)</div></div>';
+    $('sfTbl').onclick = function (e) { var b = e.target.closest('[data-i]'); if (b) editStaff(list[Number(b.getAttribute('data-i'))]); };
+  });
+  if (s === 'pay') call('staffList', { month: m }).then(function (list) {
+    $('stfBox').innerHTML = '<div class="card"><h3>Pay Staff</h3><div class="form">' +
+      field('Staff', '<select id="spU">' + list.filter(function (u) { return u.active; }).map(function (u) { return '<option value="' + esc(u.id) + '">' + esc(u.name) + ' (due ' + tk(u.due) + ')</option>'; }).join('') + '</select>') +
+      field('Type', '<select id="spT"><option>Salary</option><option>Advance</option><option>Bonus</option></select>') + field('For Month', inp('spM', { type: 'month', v: m })) +
+      field('Amount (Tk)', inp('spA', { type: 'number' })) + field('Date', inp('spD', { type: 'date', v: today() })) + field('Note', inp('spN')) +
+      '</div><div class="actions"><button class="btn" id="spGo">Save</button></div></div>';
+    $('spGo').onclick = function () {
+      call('staffPay', { userId: val('spU'), type: val('spT'), forMonth: val('spM'), amount: val('spA'), date: val('spD'), note: val('spN') })
+        .then(function () { toast('Payment saved'); S.sub.staff = 'list'; render(); });
+    };
+  });
+  if (s === 'pays') call('staffPayList', { month: m }).then(function (list) {
+    $('stfBox').innerHTML = '<div class="card scroll"><table class="tbl" id="ppTbl"><tr><th>Date</th><th>Staff</th><th>Type</th><th class="n">Amount</th><th></th></tr>' +
+      (list.length ? list.map(function (r) { return '<tr><td>' + esc(prettyDate(r.date)) + '</td><td>' + esc(r.name) + '<div class="muted">' + esc(r.note) + '</div></td><td>' + esc(r.type) + '</td><td class="n">' + tk(r.amount) + '</td><td><button class="btn bad sm" data-del="' + esc(r.id) + '">Delete</button></td></tr>'; }).join('')
+        : '<tr><td colspan="5" class="muted">No payments</td></tr>') + '</table></div>';
+    $('ppTbl').onclick = function (e) {
+      var b = e.target.closest('[data-del]'); if (!b || !confirm('Delete this payment?')) return;
+      call('staffPayDelete', { id: b.getAttribute('data-del') }).then(function () { toast('Deleted'); render(); });
+    };
+  });
+}
+function editStaff(u) {
+  var bg = document.createElement('div'); bg.className = 'modal-bg';
+  bg.innerHTML = '<div class="modal"><h3>' + esc(u.name) + '</h3><div class="form">' + field('Name', inp('esName', { v: u.name })) + field('Mobile', inp('esMob', { v: u.mobile })) +
+    field('Role', '<select id="esRole">' + opts(S.boot.roles, u.role) + '</select>') + field('Monthly Salary (Tk)', inp('esSal', { type: 'number', v: u.salary })) +
+    field('New PIN (only to change)', inp('esPin', { mode: 'numeric' })) + '</div>' +
+    '<div class="chk" style="margin-top:10px"><input type="checkbox" id="esOff"' + (u.active ? '' : ' checked') + '> Left the job (block login)</div>' +
+    '<div class="actions"><button class="btn" id="esSave">Save</button><button class="btn sec" id="esX">Close</button></div></div>';
+  document.body.appendChild(bg);
+  $('esX').onclick = function () { bg.remove(); };
+  $('esSave').onclick = function () {
+    call('staffSave', { id: u.id, name: val('esName'), mobile: val('esMob'), role: val('esRole'), salary: val('esSal'), pin: val('esPin'), active: !checked('esOff') })
+      .then(function () { bg.remove(); toast('Saved'); render(); });
+  };
+}
+
+/* ---------- finance ---------- */
+function viewFin() {
+  var html = subTabs('fin', [['over', 'Overview'], ['partners', 'Partners'], ['cap', 'Capital'], ['loan', 'Loans'], ['asset', 'Assets']]), s = S.sub.fin, L = S.boot.lists;
+  if (s === 'partners') { $('app').innerHTML = html + '<div id="pForm"></div><div id="fBox"></div>'; bindSub('fin'); loadPartners(); return; }
+  if (s === 'over') html += '<div id="fBox"><div class="card">Loading...</div></div>';
+  if (s === 'cap') html += '<div class="card"><h3>Add Capital Entry</h3><div class="form">' +
+    field('Partner', '<select id="cPartner"><option value="">Loading...</option></select>') +
+    field('Type', '<select id="cType"><option value="Investment">Investment (money put into the shop)</option><option value="Withdrawal">Withdrawal (money taken out by the partner)</option></select>') +
+    field('Date', inp('cDate', { type: 'date', v: today() })) + field('Amount (Tk)', inp('cAmt', { type: 'number', mode: 'numeric' })) +
+    field('Payment Method', '<select id="cPay">' + opts(L.paymentMethods) + '</select>') + field('Note', inp('cNote')) +
+    '</div><div class="actions"><button class="btn" id="cSave">Save</button></div></div><div id="fBox"></div>';
+  if (s === 'loan') html += '<div class="card"><h3>Add Loan Entry</h3><div class="form">' +
+    field('Type', '<select id="lType"><option value="Loan Taken">Loan Taken (money received)</option><option value="Repayment">Repayment (money paid back)</option></select>') +
+    field('Lender Name', '<input id="lName" list="lenderList" placeholder="Person or company">') + '<datalist id="lenderList"></datalist>' +
+    field('Lender Mobile', inp('lMob', { mode: 'tel' })) + field('Date', inp('lDate', { type: 'date', v: today() })) +
+    field('Amount (Tk)', inp('lAmt', { type: 'number', mode: 'numeric' })) + field('Payment Method', '<select id="lPay">' + opts(L.paymentMethods) + '</select>') +
+    field('Note', inp('lNote')) + '</div><div class="actions"><button class="btn" id="lSave">Save</button></div></div><div id="fBox"></div>';
+  if (s === 'asset') html += '<div class="card"><h3>Add Asset</h3><div class="form">' +
+    field('Asset Name', inp('aName', { ph: 'e.g. Glass showcase, Laptop' })) + field('Category', '<select id="aCat">' + opts(L.assetCategories || []) + '</select>') +
+    field('Purchase Date', inp('aDate', { type: 'date', v: today() })) + field('Value (Tk)', inp('aVal', { type: 'number', mode: 'numeric' })) +
+    field('Note', inp('aNote')) + '</div><div class="muted" style="margin-top:8px">Shop equipment and furniture you own. Phones and accessories for sale are counted in stock, not here.</div>' +
+    '<div class="actions"><button class="btn" id="aSave">Save</button></div></div><div id="fBox"></div>';
+  $('app').innerHTML = html; bindSub('fin');
+  var del = function (kind, reload) {
+    $('fBox').onclick = function (e) {
+      var b = e.target.closest('[data-del]'); if (!b || !confirm('Delete this entry?')) return;
+      call('financeDelete', { kind: kind, id: b.getAttribute('data-del') }).then(function () { toast('Deleted'); reload(); });
+    };
+  };
+  var delBtn = function (id) { return '<button class="btn bad sm" data-del="' + esc(id) + '">Delete</button>'; };
+
+  if (s === 'over') call('financeSummary', {}, true).then(function (f) {
+    var line = function (k, v, b) { return '<tr><td>' + (b ? '<b>' + k + '</b>' : k) + '</td><td class="n">' + (b ? '<b>' + v + '</b>' : v) + '</td></tr>'; };
+    $('fBox').innerHTML = '<div class="card"><div class="grid">' + stat('Cash &amp; Bank Balance', tk(f.cashBalance), signCls(f.cashBalance)) +
+      stat('Total Assets', tk(f.totalAssets)) + stat('Loans to Repay', tk(f.loanOutstanding), f.loanOutstanding > 0 ? 'bad' : '') +
+      stat('Net Worth', tk(f.netWorth), signCls(f.netWorth)) + '</div></div>' +
+      '<div class="card"><h3>What the Shop Owns</h3><table class="tbl">' + line('Cash &amp; Bank Balance', tk(f.cashBalance)) + line('Phone Stock (at cost)', tk(f.phoneStockValue)) +
+      line('Accessories Stock (at cost)', tk(f.accStockValue)) + line('Fixed Assets', tk(f.fixedAssets)) + line('Total Assets', tk(f.totalAssets), 1) + '</table></div>' +
+      '<div class="card"><h3>What the Shop Owes</h3><table class="tbl">' +
+      (f.lenders.length ? f.lenders.map(function (l) { return line(esc(l.lender) + (l.mobile ? ' <span class="muted">' + esc(l.mobile) + '</span>' : ''), tk(l.balance)); }).join('') : line('No outstanding loans', tk(0))) +
+      line('Total Loans to Repay', tk(f.loanOutstanding), 1) + '</table></div>' +
+      '<div class="card scroll"><h3>Partners</h3>' + (f.partners.length ? '<table class="tbl"><tr><th>Partner</th><th class="n">Invested</th><th class="n">Withdrawn</th><th class="n">Profit Share</th><th class="n">Balance</th></tr>' +
+        f.partners.map(function (x) { return '<tr><td><b>' + esc(x.name) + '</b><div class="muted">' + x.profitPct.toFixed(1) + '% of profit</div></td><td class="n">' + tk(x.invested) + '</td><td class="n">' + tk(x.withdrawn) +
+          '</td><td class="n">' + tk(x.profitShare) + '</td><td class="n"><b>' + tk(x.equity) + '</b></td></tr>'; }).join('') + '</table>'
+        : '<div class="muted">No partners yet. Add them in Finance &gt; Partners.</div>') + '</div>' +
+      '<div class="card"><h3>Equity</h3><table class="tbl">' + line('Capital Invested', tk(f.capitalIn)) + line('Partner Withdrawals', '- ' + tk(f.capitalOut)) +
+      line('Net Capital', tk(f.ownerCapital), 1) + line('Net Profit (all time)', tk(f.netProfit)) + line('Net Worth (Total Assets - Loans)', tk(f.netWorth), 1) + '</table>' +
+      '<div class="muted" style="margin-top:8px">Cash &amp; Bank Balance = capital + loans + sales collected - purchases - expenses - salaries - repayments - withdrawals - assets. Add your starting capital in the Capital tab so this matches the money you actually have.</div></div>';
+  });
+
+  if (s === 'cap') {
+    call('partnerList', {}, true).then(function (d) {
+      var act = d.partners.filter(function (x) { return x.active; });
+      $('cPartner').innerHTML = act.length ? act.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.name) + '</option>'; }).join('')
+        : '<option value="">No partners yet: add them in the Partners tab</option>';
+    });
+    var loadC = function () {
+      call('capitalList', {}, true).then(function (list) {
+        var inv = list.filter(function (x) { return x.type === 'Investment'; }).reduce(function (a, x) { return a + x.amount; }, 0);
+        var wd = list.filter(function (x) { return x.type === 'Withdrawal'; }).reduce(function (a, x) { return a + x.amount; }, 0);
+        $('fBox').innerHTML = '<div class="card"><div class="grid">' + stat('Total Invested', tk(inv)) + stat('Total Withdrawn', tk(wd)) + stat('Net Capital', tk(inv - wd), signCls(inv - wd)) + '</div></div>' +
+          '<div class="card scroll"><table class="tbl"><tr><th>Date</th><th>Partner</th><th>Type</th><th class="n">Amount</th><th>Note</th><th></th></tr>' +
+          (list.length ? list.map(function (r) {
+            return '<tr><td>' + esc(prettyDate(r.date)) + '</td><td><b>' + esc(r.partner) + '</b></td><td>' + esc(r.type) + '<div class="muted">' + esc(r.payment) + '</div></td><td class="n">' + tk(r.amount) + '</td><td>' + esc(r.note) + '</td><td>' + delBtn(r.id) + '</td></tr>';
+          }).join('') : '<tr><td colspan="6" class="muted">No capital entries yet. Add each partner&#39;s starting investment.</td></tr>') + '</table></div>';
+      });
+    };
+    $('cSave').onclick = function () {
+      call('capitalAdd', { partnerId: val('cPartner'), type: val('cType'), date: val('cDate'), amount: val('cAmt'), paymentMethod: val('cPay'), note: val('cNote') })
+        .then(function () { toast('Saved'); $('cAmt').value = ''; $('cNote').value = ''; loadC(); });
+    };
+    del('capital', loadC); loadC();
+  }
+
+  if (s === 'loan') {
+    var loadL = function () {
+      call('loanList', {}, true).then(function (d) {
+        $('lenderList').innerHTML = d.lenders.map(function (l) { return '<option value="' + esc(l.lender) + '">'; }).join('');
+        var out = d.lenders.reduce(function (a, l) { return a + l.balance; }, 0);
+        $('fBox').innerHTML = '<div class="card scroll"><h3>Balance by Lender</h3><div class="grid" style="margin-bottom:10px">' + stat('Total to Repay', tk(out), out > 0 ? 'bad' : '') + '</div>' +
+          '<table class="tbl" id="lendTbl"><tr><th>Lender</th><th class="n">Taken</th><th class="n">Repaid</th><th class="n">Balance</th><th></th></tr>' +
+          (d.lenders.length ? d.lenders.map(function (l) {
+            return '<tr><td><b>' + esc(l.lender) + '</b><div class="muted">' + esc(l.mobile || '') + '</div></td><td class="n">' + tk(l.taken) + '</td><td class="n">' + tk(l.repaid) +
+              '</td><td class="n"><b>' + tk(l.balance) + '</b></td><td>' + (l.balance > 0 ? '<button class="btn sec sm" data-repay="' + esc(l.lender) + '" data-bal="' + l.balance + '">Repay</button>' : '<span class="pill">Paid off</span>') + '</td></tr>';
+          }).join('') : '<tr><td colspan="5" class="muted">No loans yet</td></tr>') + '</table></div>' +
+          '<div class="card scroll"><h3>Loan History</h3><table class="tbl"><tr><th>Date</th><th>Lender</th><th>Type</th><th class="n">Amount</th><th>Note</th><th></th></tr>' +
+          (d.history.length ? d.history.map(function (r) {
+            return '<tr><td>' + esc(prettyDate(r.date)) + '</td><td>' + esc(r.lender) + '</td><td>' + esc(r.type) + '<div class="muted">' + esc(r.payment) + '</div></td><td class="n">' + tk(r.amount) + '</td><td>' + esc(r.note) + '</td><td>' + delBtn(r.id) + '</td></tr>';
+          }).join('') : '<tr><td colspan="6" class="muted">No entries</td></tr>') + '</table></div>';
+        $('lendTbl').onclick = function (e) {
+          var b = e.target.closest('[data-repay]'); if (!b) return;
+          $('lType').value = 'Repayment'; $('lName').value = b.getAttribute('data-repay'); $('lAmt').value = b.getAttribute('data-bal');
+          window.scrollTo(0, 0); $('lAmt').focus();
+        };
+      });
+    };
+    $('lSave').onclick = function () {
+      call('loanAdd', { type: val('lType'), lender: val('lName'), mobile: val('lMob'), date: val('lDate'), amount: val('lAmt'), paymentMethod: val('lPay'), note: val('lNote') })
+        .then(function () { toast('Saved'); ['lName', 'lMob', 'lAmt', 'lNote'].forEach(function (i) { $(i).value = ''; }); loadL(); });
+    };
+    del('loan', loadL); loadL();
+  }
+
+  if (s === 'asset') {
+    var loadA = function () {
+      call('assetList', {}, true).then(function (list) {
+        var tot = list.reduce(function (a, x) { return a + x.value; }, 0);
+        $('fBox').innerHTML = '<div class="card scroll"><div class="grid" style="margin-bottom:10px">' + stat('Total Asset Value', tk(tot)) + stat('Items', list.length) + '</div>' +
+          '<table class="tbl"><tr><th>Date</th><th>Asset</th><th class="n">Value</th><th>Note</th><th></th></tr>' +
+          (list.length ? list.map(function (r) {
+            return '<tr><td>' + esc(prettyDate(r.date)) + '</td><td><b>' + esc(r.name) + '</b><div class="muted">' + esc(r.category) + '</div></td><td class="n">' + tk(r.value) + '</td><td>' + esc(r.note) + '</td><td>' + delBtn(r.id) + '</td></tr>';
+          }).join('') : '<tr><td colspan="5" class="muted">No assets yet</td></tr>') + '</table></div>';
+      });
+    };
+    $('aSave').onclick = function () {
+      call('assetAdd', { name: val('aName'), category: val('aCat'), date: val('aDate'), value: val('aVal'), note: val('aNote') })
+        .then(function () { toast('Asset saved'); ['aName', 'aVal', 'aNote'].forEach(function (i) { $(i).value = ''; }); loadA(); });
+    };
+    del('asset', loadA); loadA();
+  }
+}
+
+function loadPartners() {
+  call('partnerList', {}, true).then(function (d) {
+    var editing = null;
+    var form = function (x) {
+      editing = x || null;
+      $('pForm').innerHTML = '<div class="card"><h3>' + (x ? 'Edit Partner: ' + esc(x.name) : 'Add Partner') + '</h3><div class="form">' +
+        field('Partner Name', inp('ptName', { v: x ? x.name : '' })) + field('Mobile', inp('ptMob', { mode: 'tel', v: x ? x.mobile : '' })) +
+        field('Profit Share % (agreed)', inp('ptShare', { type: 'number', v: x ? (x.agreedShare || '') : '', ph: 'Leave blank to share by capital' })) +
+        (x ? '' : field('Joining Date', inp('ptJoin', { type: 'date', v: today() }))) + '</div>' +
+        (x ? '<div class="chk" style="margin-top:10px"><input type="checkbox" id="ptOff"' + (x.active ? '' : ' checked') + '> Partner has left the business</div>' : '') +
+        '<div class="muted" style="margin-top:8px">Profit share: if you set a % for partners, profit is split by those %. If no % is set for anyone, profit is split by how much each partner invested.</div>' +
+        '<div class="actions"><button class="btn" id="ptSave">Save</button>' + (x ? '<button class="btn sec" id="ptCancel">Cancel</button>' : '') + '</div></div>';
+      $('ptSave').onclick = function () {
+        call('partnerSave', { id: editing && editing.id, name: val('ptName'), mobile: val('ptMob'), share: val('ptShare'), joinDate: val('ptJoin'),
+                              active: editing ? !checked('ptOff') : true }).then(function () { toast('Partner saved'); loadPartners(); });
+      };
+      if ($('ptCancel')) $('ptCancel').onclick = function () { form(null); };
+    };
+    form(null);
+    var t = d.totals;
+    $('fBox').innerHTML = '<div class="card"><div class="grid">' + stat('Partners', d.partners.length) + stat('Total Invested', tk(t.invested)) +
+      stat('Net Profit (all time)', tk(d.netProfit), signCls(d.netProfit)) + stat('Total Partner Balance', tk(t.equity)) + '</div>' +
+      '<div class="muted" style="margin-top:10px">Profit is split ' + (d.shareMode === 'agreed' ? 'by the agreed profit share % (total set: ' + d.agreedTotal + '%).' : 'by each partner&#39;s share of total investment.') +
+      (d.shareMode === 'agreed' && Math.abs(d.agreedTotal - 100) > 0.001 ? ' <b style="color:var(--bad)">The agreed shares add up to ' + d.agreedTotal + '%, not 100%.</b>' : '') + '</div></div>' +
+      '<div class="card scroll"><table class="tbl" id="ptTbl"><tr><th>Partner</th><th class="n">Invested</th><th class="n">Withdrawn</th><th class="n">Net Capital</th><th class="n">Capital %</th>' +
+      '<th class="n">Profit %</th><th class="n">Profit Share</th><th class="n">Balance</th><th></th></tr>' +
+      (d.partners.length ? d.partners.map(function (x, i) {
+        return '<tr' + (x.active ? '' : ' style="opacity:.5"') + '><td><b>' + esc(x.name) + '</b><div class="muted">' + esc(x.mobile || '') + '</div></td><td class="n">' + tk(x.invested) +
+          '</td><td class="n">' + tk(x.withdrawn) + '</td><td class="n">' + tk(x.netCapital) + '</td><td class="n">' + x.capitalPct.toFixed(1) + '%</td><td class="n">' + x.profitPct.toFixed(1) +
+          '%</td><td class="n">' + tk(x.profitShare) + '</td><td class="n"><b>' + tk(x.equity) + '</b></td><td><button class="btn sec sm" data-i="' + i + '">Edit</button></td></tr>';
+      }).join('') + '<tr><td><b>Total</b></td><td class="n"><b>' + tk(t.invested) + '</b></td><td class="n"><b>' + tk(t.withdrawn) + '</b></td><td class="n"><b>' + tk(t.netCapital) +
+        '</b></td><td></td><td></td><td class="n"><b>' + tk(t.profitShare) + '</b></td><td class="n"><b>' + tk(t.equity) + '</b></td><td></td></tr>'
+        : '<tr><td colspan="9" class="muted">No partners yet. Add each partner above, then record their investment in the Capital tab.</td></tr>') + '</table>' +
+      '<div class="muted" style="margin-top:8px">Balance = what each partner has in the business: net capital + their share of profit.</div></div>';
+    $('ptTbl').onclick = function (e) { var b = e.target.closest('[data-i]'); if (b) { form(d.partners[Number(b.getAttribute('data-i'))]); window.scrollTo(0, 0); } };
+  });
+}
+
+function loadBackup() {
+  var draw = function (b) {
+    var link = function (url, text) { return '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(text) + '</a>'; };
+    $('bkBox').innerHTML = '<div class="card"><h3>Automatic Monthly Backup</h3><div class="grid">' +
+      stat('Status', b.enabled ? 'On' : 'Off', b.enabled ? 'good' : 'bad') +
+      stat('Last Backup', b.last ? esc(prettyDate(b.last.date.slice(0, 10))) + ' ' + esc(b.last.date.slice(11)) : 'Never') +
+      stat('Backups Kept', b.backups.length + ' of ' + b.keep) + '</div>' +
+      '<div class="muted" style="margin-top:10px">When on, a full copy of your shop sheet is saved on the 1st of every month at about 2 AM in the Google Drive folder "' + esc(b.folderName) +
+      '". The newest ' + b.keep + ' backups are kept and older ones go to the Drive trash.</div>' +
+      '<div class="actions">' + (b.enabled ? '<button class="btn bad" id="bkOff">Turn Off</button>' : '<button class="btn" id="bkOn">Turn On Monthly Backup</button>') +
+      '<button class="btn sec" id="bkNow">Backup Now</button>' + (b.folderUrl ? '<a class="btn sec" style="text-decoration:none" href="' + esc(b.folderUrl) + '" target="_blank" rel="noopener">Open Backup Folder</a>' : '') + '</div></div>' +
+      '<div class="card scroll"><h3>Backups</h3><table class="tbl"><tr><th>Date</th><th>File</th></tr>' +
+      (b.backups.length ? b.backups.map(function (x) { return '<tr><td style="white-space:nowrap">' + esc(prettyDate(x.date.slice(0, 10))) + '<div class="muted">' + esc(x.date.slice(11)) + '</div></td><td>' + link(x.url, x.name) + '</td></tr>'; }).join('')
+        : '<tr><td colspan="2" class="muted">No backups yet. Tap Backup Now to make the first one.</td></tr>') + '</table>' +
+      '<div class="muted" style="margin-top:8px">To restore: open a backup file and copy the tabs you need back into the main sheet, or ask your developer for help.</div></div>';
+    if ($('bkOn')) $('bkOn').onclick = function () { call('backupEnable').then(function (x) { toast('Monthly backup turned on'); draw(x); }, backupHelp); };
+    if ($('bkOff')) $('bkOff').onclick = function () { if (confirm('Turn off the monthly backup?')) call('backupDisable').then(function (x) { toast('Monthly backup turned off'); draw(x); }, backupHelp); };
+    $('bkNow').onclick = function () { call('backupNow').then(function (x) { toast('Backup saved to Google Drive'); draw(x); }, backupHelp); };
+  };
+  call('backupStatus', {}, true).then(draw, backupHelp);
+}
+function backupHelp(err) {
+  if (!$('bkBox')) return;
+  $('bkBox').innerHTML = '<div class="card"><h3>Backup needs permission</h3><div class="muted">' + esc(err || '') + '</div>' +
+    '<p>Google needs your one-time permission to save backups to your Drive:</p><ol><li>Open the sheet &gt; Extensions &gt; Apps Script.</li>' +
+    '<li>In the function list next to Run, choose <b>setupBackup</b> and click Run.</li><li>Click Review permissions &gt; your account &gt; Advanced &gt; Go to project &gt; Allow.</li>' +
+    '<li>Come back here and refresh.</li></ol></div>';
+}
+
+/* ---------- reports ---------- */
+function viewReport() {
+  var html = subTabs('report', [['day', 'Daily Report'], ['month', 'Monthly Report'], ['staff', 'Staff Sales Report']]), s = S.sub.report;
+  if (s === 'staff') {
+    html += '<div class="card"><div class="row">' + field('From', inp('rsF', { type: 'date', v: S.rsFrom || today().slice(0, 8) + '01' })) +
+      field('To', inp('rsT', { type: 'date', v: S.rsTo || today() })) + '<button class="btn" id="rGo">Show</button></div></div><div id="rBox"></div><div id="rDetail"></div>';
+    $('app').innerHTML = html; bindSub('report');
+    $('rGo').onclick = loadStaffReport; loadStaffReport();
+    return;
+  }
+  if (s === 'day') html += '<div class="card"><div class="row">' + field('Date', inp('rD', { type: 'date', v: S.repDate || today() })) + '<button class="btn" id="rGo">Show</button></div></div><div id="rBox"></div>';
+  if (s === 'month') html += '<div class="card"><div class="row">' + field('Year', inp('rY', { type: 'number', v: S.repYear || today().slice(0, 4) })) + '<button class="btn" id="rGo">Show</button></div></div><div id="rBox"></div>';
+  $('app').innerHTML = html; bindSub('report');
+  if (s === 'day') {
+    var loadD = function () {
+      S.repDate = val('rD');
+      call('reportDaily', { date: S.repDate }).then(function (r) {
+        var line = function (k, v, b) { return '<tr><td>' + (b ? '<b>' + k + '</b>' : k) + '</td><td class="n">' + (b ? '<b>' + v + '</b>' : v) + '</td></tr>'; };
+        $('rBox').innerHTML = '<div class="card"><h3>Sales &amp; Profit</h3><table class="tbl">' +
+          line('Phones Sold', r.phoneCount) + line('Phone Sales', tk(r.phoneSales)) + line('Accessories Sales', tk(r.accSales)) +
+          (r.returnValue ? line('Returns (already taken off above)', '- ' + tk(r.returnValue) + ' <span class="muted">(' + r.returnCount + ')</span>') : '') + line('Total Sales', tk(r.totalSales), 1) +
+          line('Profit from Phones', tk(r.phoneProfit)) + line('Profit from Accessories', tk(r.accProfit)) + line('Gross Profit', tk(r.grossProfit), 1) +
+          line('Shop Expenses', '- ' + tk(r.expenses)) + line('Staff Payments', '- ' + tk(r.staffPaid)) +
+          (r.supplierReturnLoss ? line('Loss on Returns to Supplier', tk(r.supplierReturnLoss)) : '') + line('Net Profit', tk(r.netProfit), 1) + '</table></div>' +
+          '<div class="card"><h3>Cash Flow</h3><table class="tbl">' + line('Cash from Phone Sales', tk(r.phoneCash)) + line('Cash from Accessories Sales', tk(r.accSalesCash)) +
+          (r.refunds ? line('Refunds to Customers', '- ' + tk(r.refunds)) : '') +
+          (r.supplierMoneyBack ? line('Money Back from Suppliers', tk(r.supplierMoneyBack)) : '') +
+          line('Phones Received in Exchange (not cash)', tk(r.exchangeValue)) + line('Phone Purchases', '- ' + tk(r.phonePurchase)) + line('Accessories Purchases', '- ' + tk(r.accPurchase)) +
+          line('Expenses + Staff Payments', '- ' + tk(r.expenses + r.staffPaid)) +
+          (r.capitalIn ? line('Capital Invested', tk(r.capitalIn)) : '') + (r.loanIn ? line('Loans Taken', tk(r.loanIn)) : '') +
+          (r.loanRepaid ? line('Loan Repayments', '- ' + tk(r.loanRepaid)) : '') + (r.capitalOut ? line('Owner Withdrawals', '- ' + tk(r.capitalOut)) : '') +
+          (r.assetPurchase ? line('Asset Purchases', '- ' + tk(r.assetPurchase)) : '') +
+          line('Net Cash', tk(r.netCash), 1) + '</table></div>' +
+          (r.expenseByCat.length ? '<div class="card"><h3>Expenses by Category</h3><table class="tbl">' + r.expenseByCat.map(function (x) { return line(esc(x.name), tk(x.amount)); }).join('') + '</table></div>' : '');
+      });
+    };
+    $('rGo').onclick = loadD; loadD();
+  }
+  if (s === 'month') {
+    var loadM = function () {
+      S.repYear = val('rY');
+      call('reportMonthly', { year: S.repYear }).then(function (r) {
+        var row = function (m, b) {
+          var w = function (v) { return b ? '<b>' + v + '</b>' : v; };
+          return '<tr><td>' + w(m.month) + '</td><td class="n">' + w(m.phoneCount) + '</td><td class="n">' + w(tk(m.totalSales)) + '</td><td class="n">' + w(tk(m.grossProfit)) +
+            '</td><td class="n">' + w(tk(m.expenses + m.staffPaid)) + '</td><td class="n" style="color:' + (m.netProfit < 0 ? 'var(--bad)' : 'var(--ok)') + '">' + w(tk(m.netProfit)) + '</td></tr>';
+        };
+        $('rBox').innerHTML = '<div class="card scroll"><h3>' + r.year + '</h3><table class="tbl"><tr><th>Month</th><th class="n">Phones</th><th class="n">Total Sales</th><th class="n">Gross Profit</th><th class="n">Expenses + Salary</th><th class="n">Net Profit</th></tr>' +
+          r.months.map(function (m) { return row(m); }).join('') + row(r.total, true) + '</table></div>';
+      });
+    };
+    $('rGo').onclick = loadM; loadM();
+  }
+}
+
+function loadStaffReport() {
+  S.rsFrom = val('rsF'); S.rsTo = val('rsT');
+  call('reportStaff', { from: S.rsFrom, to: S.rsTo }).then(function (r) {
+    var row = function (x, i) {
+      var b = i === undefined;
+      var w = function (v) { return b ? '<b>' + v + '</b>' : v; };
+      return '<tr><td>' + w(esc(x.name)) + '</td><td class="n">' + w(x.phoneCount) + (x.exchangeCount ? '<div class="muted">' + x.exchangeCount + ' exchange</div>' : '') +
+        '</td><td class="n">' + w(tk(x.phoneSales)) + '</td><td class="n">' + w(x.accQty) + '</td><td class="n">' + w(tk(x.accSales)) +
+        '</td><td class="n">' + w(tk(x.totalSales)) + '</td><td class="n" style="color:' + (x.totalProfit < 0 ? 'var(--bad)' : 'var(--ok)') + '">' + w(tk(x.totalProfit)) +
+        '</td><td class="n">' + w(tk(x.returns)) + '</td><td class="n">' + w(x.phonesBought) + '<div class="muted">' + tk(x.phonesBoughtValue) + '</div></td><td class="n">' + w(tk(x.expenses)) + '</td><td>' +
+        (b ? '' : '<button class="btn sec sm" data-who="' + esc(x.name) + '">Details</button>') + '</td></tr>';
+    };
+    $('rBox').innerHTML = '<div class="card scroll"><h3>Sales by Staff: ' + esc(prettyDate(r.from)) + ' to ' + esc(prettyDate(r.to)) + '</h3><table class="tbl" id="rsTbl"><tr><th>Staff</th>' +
+      '<th class="n">Phones Sold</th><th class="n">Phone Sales</th><th class="n">Acc. Qty</th><th class="n">Acc. Sales</th><th class="n">Total Sales</th><th class="n">Profit</th>' +
+      '<th class="n">Returns</th><th class="n">Phones Bought</th><th class="n">Expenses Added</th><th></th></tr>' + r.staff.map(row).join('') + row(r.total) + '</table></div>';
+    $('rDetail').innerHTML = '';
+    $('rsTbl').onclick = function (e) {
+      var b = e.target.closest('[data-who]'); if (!b) return;
+      var who = b.getAttribute('data-who');
+      call('salesList', { from: r.from, to: r.to, soldBy: who }).then(function (d) {
+        var all = d.phones.concat(d.acc);
+        $('rDetail').innerHTML = '<div class="card scroll"><h3>' + esc(who) + ': ' + all.length + ' sales</h3><table class="tbl"><tr><th>Date</th><th>Memo</th><th>Item</th><th>Customer</th><th class="n">Amount</th><th class="n">Profit</th></tr>' +
+          (all.length ? all.map(function (x) {
+            return '<tr><td>' + esc(prettyDate(x.date)) + '</td><td>' + esc(x.invoice) + '</td><td>' + esc(x.item) + (x.imei ? '<div class="muted">' + esc(x.imei) + '</div>' : '') +
+              '</td><td>' + esc(x.customer) + '</td><td class="n">' + tk(x.amount) + '</td><td class="n">' + tk(x.profit) + '</td></tr>';
+          }).join('') : '<tr><td colspan="6" class="muted">No sales</td></tr>') + '</table></div>';
+        $('rDetail').scrollIntoView({ behavior: 'smooth' });
+      });
+    };
+  });
+}
+
+/* ---------- settings ---------- */
+function viewMore() {
+  var tabs = [['pin', 'Change PIN']];
+  if (isOwner()) tabs.unshift(['set', 'Shop Settings'], ['memo', 'Cash Memo'], ['backup', 'Backup']);
+  var html = subTabs('more', tabs), s = S.sub.more, st = S.boot.settings;
+  if (s === 'set') {
+    html += '<div class="card"><h3>Shop Information (shown on the cash memo)</h3><div class="form">' + field('Shop Name', inp('stName', { v: st.ShopName })) +
+      field('Address', inp('stAddr', { v: st.ShopAddress })) + field('Phone', inp('stPh', { v: st.ShopPhone })) + '</div>' +
+      '<h3 style="margin-top:16px">Dropdown Lists (separate with commas)</h3><div class="form">' +
+      field('Phone Types', '<textarea id="stPT" rows="2">' + esc(st.PhoneTypes) + '</textarea>') + field('Payment Methods', '<textarea id="stPM" rows="2">' + esc(st.PaymentMethods) + '</textarea>') +
+      field('Expense Categories', '<textarea id="stEC" rows="3">' + esc(st.ExpenseCategories) + '</textarea>') + field('Accessory Categories', '<textarea id="stAC" rows="3">' + esc(st.AccCategories) + '</textarea>') +
+      field('Asset Categories', '<textarea id="stAS" rows="3">' + esc(st.AssetCategories || '') + '</textarea>') +
+      '</div><div class="actions"><button class="btn" id="stSave">Save</button></div></div>';
+  }
+  if (s === 'memo') {
+    html += '<div class="card"><h3>Cash Memo Settings</h3><div class="form">' +
+      field('Paper Size', '<select id="mSize">' + ['A5', 'A4', '80mm'].map(function (x) { return '<option value="' + x + '"' + (x === (st.MemoSize || 'A5') ? ' selected' : '') + '>' + { A5: 'A5 (half A4 page)', A4: 'A4 (full page)', '80mm': '80mm thermal roll printer' }[x] + '</option>'; }).join('') + '</select>') +
+      '</div><div style="margin-top:10px">' + field('Terms &amp; Conditions (one per line)', '<textarea id="mTerms" rows="5">' + esc(st.MemoTerms || '') + '</textarea>') + '</div>' +
+      '<div class="actions"><button class="btn" id="mSave">Save</button><button class="btn sec" id="mPrev">Preview Sample Memo</button></div></div>';
+  }
+  if (s === 'backup') html += '<div id="bkBox"><div class="card">Loading...</div></div>';
+  if (s === 'pin') html += '<div class="card"><h3>Change PIN</h3><div class="form">' + field('Current PIN', inp('pOld', { type: 'password', mode: 'numeric' })) +
+    field('New PIN (4-8 digits)', inp('pNew', { type: 'password', mode: 'numeric' })) + field('Confirm New PIN', inp('pNew2', { type: 'password', mode: 'numeric' })) +
+    '</div><div class="actions"><button class="btn" id="pSave">Change PIN</button></div></div>';
+  if (inApp()) html += '<div class="card"><h3>Android App</h3><div class="muted" style="margin-bottom:10px">Connect this app to a different Web App link (for example after creating a new deployment).</div>' +
+    '<button class="btn sec" id="appLink">Change App Link</button></div>';
+  html += '<div class="card"><button class="btn bad" id="logout">Logout</button></div>';
+  $('app').innerHTML = html; bindSub('more');
+  if (s === 'set') $('stSave').onclick = function () {
+    call('settingsSave', { ShopName: val('stName'), ShopAddress: val('stAddr'), ShopPhone: val('stPh'), PhoneTypes: val('stPT'), PaymentMethods: val('stPM'),
+                           ExpenseCategories: val('stEC'), AccCategories: val('stAC'), AssetCategories: val('stAS') }).then(function () { toast('Saved'); start(); });
+  };
+  if (s === 'memo') {
+    $('mSave').onclick = function () { call('settingsSave', { MemoSize: val('mSize'), MemoTerms: $('mTerms').value }).then(function () { toast('Saved'); start(); }); };
+    $('mPrev').onclick = function () {
+      showMemo({ shop: { name: st.ShopName, address: st.ShopAddress, phone: st.ShopPhone }, memoSize: val('mSize'),
+        terms: $('mTerms').value.split('\n').map(function (x) { return x.trim(); }).filter(String), invoice: 'INV-00000', date: today(),
+        customer: 'Sample Customer', mobile: '01XXXXXXXXX', address: '', payment: 'Cash', soldBy: S.boot.user.Name,
+        lines: [{ name: 'Samsung Galaxy A15 6/128', details: ['IMEI 1: 356789012345678', 'IMEI 2: 356789012345679', 'Black, New Official'], qty: 1, price: 19500, total: 19500 },
+                { name: 'Type-C Fast Charger 25W', details: [], qty: 1, price: 550, total: 550 }],
+        subtotal: 20050, discount: 50, exchange: 5000, exchanges: [{ name: 'Xiaomi Redmi 9 4/64', imei: '359999999999999', value: 5000 }],
+        payable: 15000, warranty: '1 year official warranty' });
+    };
+  }
+  if (s === 'backup') loadBackup();
+  if (s === 'pin') $('pSave').onclick = function () {
+    if (val('pNew') !== val('pNew2')) return toast('New PINs do not match', true);
+    call('changePin', { oldPin: val('pOld'), newPin: val('pNew') }).then(function () { toast('PIN changed'); S.sub.more = isOwner() ? 'set' : 'pin'; render(); });
+  };
+  if ($('appLink')) $('appLink').onclick = function () { if (confirm('Change the Web App link this app opens?')) window.AndroidApp.resetUrl(); };
+  $('logout').onclick = function () { call('logout', { token: S.token }, true).then(logoutLocal, logoutLocal); };
+}
+
+/* ---------- start ---------- */
+if (API_URL.indexOf('http') !== 0) {
+  $('app').innerHTML = '<div class="card"><h3>Setup needed</h3>Open index.html and paste your Apps Script Web App link into API_URL.</div>';
+} else if (S.token) start(); else showLogin();
+</script>
+</body>
+</html>
